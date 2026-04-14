@@ -1,0 +1,41 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Dependency directories
+node_modules/
+
+# TypeScript v1-v3 build cache
+*.tsbuildinfo
+
+# OS Metadata
+.DS_Store
+Thumbs.db
+
+# IDE Settings
+.vscode/
+.idea/
+
+# Backend specific
+backend/dist/
+backend/node_modules/
+backend/.env
+backend/.env.*
+
+# Frontend specific
+frontend/.expo/
+frontend/dist/
+frontend/web-build/
+frontend/node_modules/
+frontend/.env
+frontend/.env.*
+frontend/ios
+frontend/android

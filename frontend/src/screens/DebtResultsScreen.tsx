@@ -58,7 +58,7 @@ export default function DebtResultsScreen({ route, navigation }: any) {
             ...group,
             concepts: Object.values(group.concepts)
         }));
-        console.log("DATOS CONSOLIDADOS:", finalData); // <--- Agrégalo aquí
+
         return finalData;
     }, [results, searchCriteria.predio]);
 

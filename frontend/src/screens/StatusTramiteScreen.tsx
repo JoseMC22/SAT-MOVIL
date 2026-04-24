@@ -46,17 +46,20 @@ export default function StatusTramiteScreen({ navigation }: any) {
         fetchTramites(isGuest ? dniSearch : undefined);
     };
 
-    const renderProgressBar = (percentage: number, days: number) => {
+    const renderProgressBar = (percentage: number, elapsedDays: number, limitDays: number) => {
         let barColor = lightTheme.colors.primary;
-        if (days > 45) {
-            barColor = lightTheme.colors.error;
-        } else if (percentage >= 100) {
-            barColor = lightTheme.colors.success;
+        
+        if (elapsedDays > limitDays) {
+            barColor = lightTheme.colors.error; // Delayed
+        } else if (elapsedDays === limitDays) {
+            barColor = '#F59E0B'; // Warning (Amber/Orange)
         }
+
+        const displayPercentage = percentage > 100 ? 100 : percentage;
 
         return (
             <View style={styles.progressContainer}>
-                <View style={[styles.progressFill, { width: `${percentage}%`, backgroundColor: barColor }]} />
+                <View style={[styles.progressFill, { width: `${displayPercentage}%`, backgroundColor: barColor }]} />
             </View>
         );
     };
@@ -67,12 +70,9 @@ export default function StatusTramiteScreen({ navigation }: any) {
 
             <View style={{ flex: 1 }}>
                 <ScrollView
-                    style={[styles.contentScroll, { backgroundColor: theme.colors.background }]}
+                    style={styles.contentScroll}
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
-                    refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[lightTheme.colors.primary]} />
-                    }
                 >
                     <View style={[
                         styles.formCard,
@@ -156,9 +156,11 @@ export default function StatusTramiteScreen({ navigation }: any) {
                                         <View style={styles.progressSection}>
                                             <View style={styles.progressHeader}>
                                                 <Text style={[styles.progressLabel, { color: theme.colors.slate }]}>Progreso del trámite (días hábiles)</Text>
-                                                <Text style={[styles.progressDays, { color: theme.colors.primary }]}>{tramite.diasTranscurridos} / {tramite.dias} días</Text>
+                                                <Text style={[styles.progressDays, { color: tramite.diasTranscurridos > tramite.dias ? theme.colors.error : theme.colors.primary }]}>
+                                                    {tramite.diasTranscurridos} / {tramite.dias} días
+                                                </Text>
                                             </View>
-                                            {renderProgressBar(tramite.porcentajeProgreso, tramite.diasTranscurridos)}
+                                            {renderProgressBar(tramite.porcentajeProgreso, tramite.diasTranscurridos, tramite.dias)}
                                         </View>
                                     ) : (
                                         <View style={[styles.finalizedSection, { backgroundColor: isDarkMode ? '#064E3B' : '#F0FDF4' }]}>
@@ -193,7 +195,7 @@ const styles = StyleSheet.create({
     },
     contentScroll: {
         flex: 1,
-        marginTop: -30,
+        marginTop: -40,
         zIndex: 1,
     },
     scrollContent: {

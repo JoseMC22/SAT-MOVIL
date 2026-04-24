@@ -12,7 +12,8 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const systemColorScheme = useColorScheme();
-    const [isDarkMode, setIsDarkMode] = useState(systemColorScheme === 'dark');
+    // Defaulting to false to always start in light mode regardless of device settings
+    const [isDarkMode, setIsDarkMode] = useState(false);
 
     const toggleTheme = () => {
         setIsDarkMode(!isDarkMode);

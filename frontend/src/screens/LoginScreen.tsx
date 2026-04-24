@@ -58,19 +58,7 @@ export default function LoginScreen({ navigation }: any) {
                 style={{ flex: 1 }}
             >
                 <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-                    {/* Dark Mode Toggle */}
-                    <View style={styles.topActions}>
-                        <TouchableOpacity
-                            style={[styles.darkModeButton, { backgroundColor: theme.colors.white }]}
-                            onPress={toggleTheme}
-                        >
-                            {isDarkMode ? (
-                                <Sun size={20} color={theme.colors.secondary} />
-                            ) : (
-                                <Moon size={20} color={'#005696'} />
-                            )}
-                        </TouchableOpacity>
-                    </View>
+                    {/* Dark Mode Toggle removed from login screen */}
 
                     {/* Logo Section */}
                     <View style={styles.header}>
@@ -88,10 +76,10 @@ export default function LoginScreen({ navigation }: any) {
                     {/* Form Section */}
                     <View style={styles.form}>
                         <Input
-                            label="Usuario"
+                            label="Código"
                             value={username}
                             onChangeText={setUsername}
-                            placeholder="Ingrese su usuario"
+                            placeholder="Código de Contribuyente"
                             autoCapitalize="none"
                             autoCorrect={false}
                             leftIcon={<User size={20} color={theme.colors.slate} />}

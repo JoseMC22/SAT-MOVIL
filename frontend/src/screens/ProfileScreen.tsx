@@ -55,8 +55,8 @@ export default function ProfileScreen({ navigation }: any) {
         setLoading(true);
         try {
             const updateData = {
-                dni: user.dni,
-                correo: editType === 'email' ? editValue : user.correo,
+                dni: user.dni || '',
+                correo: editType === 'email' ? editValue : (user.correo || ''),
                 celular: editType === 'phone' ? editValue : String(user.celular || '0'),
             };
 
@@ -168,7 +168,7 @@ export default function ProfileScreen({ navigation }: any) {
                         </View> */}
 
                         {/* Terms Section */}
-                        <TouchableOpacity style={styles.termsLink}>
+                        <TouchableOpacity style={styles.termsLink} onPress={() => navigation.navigate('TermsAndConditions')}>
                             <Text style={[styles.termsText, { color: theme.colors.primary }]}>Revisa los Términos y condiciones</Text>
                         </TouchableOpacity>
 

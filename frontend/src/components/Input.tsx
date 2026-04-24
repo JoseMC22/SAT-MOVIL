@@ -20,6 +20,7 @@ interface InputProps {
     numberOfLines?: number;
     containerStyle?: any;
     style?: any;
+    editable?: boolean;
 }
 
 export const Input = ({
@@ -40,6 +41,7 @@ export const Input = ({
     numberOfLines,
     containerStyle,
     style,
+    editable = true,
 }: InputProps) => {
     const { theme } = useTheme();
     const [isFocused, setIsFocused] = useState(false);
@@ -73,6 +75,7 @@ export const Input = ({
                     numberOfLines={numberOfLines}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
+                    editable={editable}
                 />
                 {rightIcon && (
                     <TouchableOpacity onPress={onRightIconPress} style={styles.iconContainer}>

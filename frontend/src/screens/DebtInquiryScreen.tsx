@@ -129,6 +129,7 @@ export default function DebtInquiryScreen({ navigation }: any) {
                                 onChangeText={setCodigo}
                                 placeholder="Ej: 0123456"
                                 keyboardType="numeric"
+                                editable={false}
                             />
 
                             <Select

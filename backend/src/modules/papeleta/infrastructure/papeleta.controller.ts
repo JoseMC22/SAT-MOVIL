@@ -1,5 +1,6 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { GetPapeletasUseCase } from '../application/get-papeletas.use-case.js';
+import { GuestLimitGuard } from '../../auth/infrastructure/guest-limit.guard.js';
 
 @Controller('papeleta')
 export class PapeletaController {
@@ -7,6 +8,7 @@ export class PapeletaController {
         private readonly getPapeletasUseCase: GetPapeletasUseCase,
     ) { }
 
+    @UseGuards(GuestLimitGuard)
     @Get('consult')
     async consult(
         @Query('anno') anno?: string,

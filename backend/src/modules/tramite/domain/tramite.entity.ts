@@ -10,7 +10,8 @@ export class Tramite {
         public readonly etiquetaEstado: string,
         public readonly diasTranscurridos: number,
         public readonly estaFinalizado: boolean,
-        public readonly porcentajeProgreso: number
+        public readonly porcentajeProgreso: number,
+        public readonly dias: number
     ) { }
 }
 

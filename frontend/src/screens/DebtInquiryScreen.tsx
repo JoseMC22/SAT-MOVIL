@@ -8,6 +8,7 @@ import { Select } from '../components/Select';
 import { ArrowLeft, Search, Info } from 'lucide-react-native';
 import { debtService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { AppHeader } from '../components/AppHeader';
 
 const YEAR_OPTIONS = [
     { label: '2026', value: '2026' },
@@ -62,11 +63,11 @@ export default function DebtInquiryScreen({ navigation }: any) {
 
     useEffect(() => {
         const fetchSubOptions = async () => {
-            if (codigo && anno && showSubOptions) {
+            if (codigo && showSubOptions && token) {
                 setLoadingSubOptions(true);
                 try {
-                    const options = await debtService.getSubOptions(codigo, anno, tributo, token || undefined);
-                    setSubOptions(options);
+                    const options = await debtService.getSubOptions(codigo, tributo, token, anno);
+                    setSubOptions([{ label: 'Todos', value: '' }, ...options]);
                     setSelectedSubOption('');
                 } catch (error) {
                     console.error('Error fetching sub-options:', error);
@@ -83,59 +84,43 @@ export default function DebtInquiryScreen({ navigation }: any) {
         fetchSubOptions();
     }, [codigo, anno, tributo, showSubOptions]);
 
-    const handleSearch = async () => {
+    const handleSearch = () => {
         if (!codigo) {
             alert('Por favor ingrese su código de contribuyente');
             return;
         }
-        if (!anno || !tributo) {
-            alert('Por favor seleccione Año y Tributo');
+        const isVehicular = tributo === '00.30';
+        if (!tributo || (!isVehicular && !anno)) {
+            alert(!tributo ? 'Por favor seleccione el Tributo' : 'Por favor seleccione el Año');
             return;
         }
-        setLoading(true);
-        try {
-            const results = await debtService.getDebt(codigo, anno, tributo, selectedSubOption, token || undefined);
 
-            if (!results || results.length === 0) {
-                alert('No se encontraron resultados de deuda para los criterios seleccionados.');
-                return;
-            }
-
-            navigation.navigate('DebtResults', {
-                results: results,
-                searchCriteria: { codigo, anno, tributo, predio: selectedSubOption }
-            });
-        } catch (e: any) {
-            alert('Error consultando deuda. ' + (e.response?.data?.message || 'Intente nuevamente.'));
-        } finally {
-            setLoading(false);
-        }
+        navigation.navigate('DebtResults', {
+            searchCriteria: { codigo, anno, tributo, predio: selectedSubOption }
+        });
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={theme.colors.primary} />
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <AppHeader title="Consulta de Deuda" />
 
-            {/* Blue Header */}
-            <View style={styles.header}>
-                <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => navigation.goBack()}
-                >
-                    <ArrowLeft color="#FFF" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Consulta de Deuda</Text>
-                <View style={{ width: 40 }} />
-            </View>
-
-            <View style={{ flex: 1, backgroundColor: theme.colors.white }}>
+            <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
                 <ScrollView
                     style={styles.contentScroll}
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
                     {/* White Container Overlapping Header */}
-                    <View style={[styles.formCard, { backgroundColor: theme.colors.white }]}>
+                    <View style={[
+                        styles.formCard,
+                        {
+                            backgroundColor: theme.colors.background,
+                            shadowOpacity: isDarkMode ? 0 : 0.05,
+                            elevation: isDarkMode ? 0 : 2,
+                            borderTopWidth: isDarkMode ? 0 : 1,
+                            borderColor: theme.colors.border
+                        }
+                    ]}>
                         <View style={styles.form}>
 
                             <Input
@@ -162,7 +147,7 @@ export default function DebtInquiryScreen({ navigation }: any) {
 
                             {showSubOptions && (
                                 <Select
-                                    label={tributo === '00.30' ? "Vehículo" : "Predio / Detalle"}
+                                    label={tributo === '00.30' ? "Placas" : "Predios"}
                                     options={subOptions}
                                     value={selectedSubOption}
                                     onSelect={setSelectedSubOption}
@@ -191,33 +176,13 @@ export default function DebtInquiryScreen({ navigation }: any) {
                     </View>
                 </ScrollView>
             </View>
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-    },
-    header: {
-        backgroundColor: lightTheme.colors.primary,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 24,
-        paddingTop: Platform.OS === 'ios' ? 10 : 20,
-        paddingBottom: 60, // Extra space for overlap
-    },
-    backButton: {
-        padding: 8,
-        marginLeft: -8,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#FFF',
     },
     contentScroll: {
         flex: 1,
@@ -235,9 +200,7 @@ const styles = StyleSheet.create({
         minHeight: 600,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
         shadowRadius: 10,
-        elevation: 8,
     },
     form: {
         width: '100%',

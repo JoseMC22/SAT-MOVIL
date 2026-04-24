@@ -5,6 +5,7 @@ import { lightTheme } from '../theme';
 import { ArrowLeft, User, Phone, Mail, ChevronRight, Info, Save, X, Bell } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/api';
+import { AppHeader } from '../components/AppHeader';
 
 export default function ProfileScreen({ navigation }: any) {
     const { theme, isDarkMode } = useTheme();
@@ -78,26 +79,26 @@ export default function ProfileScreen({ navigation }: any) {
     );
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <StatusBar barStyle="light-content" backgroundColor={lightTheme.colors.primary} />
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <AppHeader title="Mi perfil" />
 
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ArrowLeft color="#FFF" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Mi perfil</Text>
-                <View style={{ width: 40 }} />
-            </View>
-
-            <View style={{ flex: 1 }}>
-                <ScrollView
-                    style={[styles.contentScroll, { backgroundColor: isDarkMode ? '#151f2d' : theme.colors.white }]}
+                    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+                        <ScrollView
+                            style={styles.contentScroll}
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
                     {/* Tarjeta con curva que se solapa */}
-                    <View style={[styles.formCard, { backgroundColor: isDarkMode ? '#151f2d' : theme.colors.white }]}>
+                        <View style={[
+                            styles.formCard, 
+                            { 
+                                backgroundColor: theme.colors.background,
+                                shadowOpacity: isDarkMode ? 0 : 0.05,
+                                elevation: isDarkMode ? 0 : 2,
+                                borderTopWidth: isDarkMode ? 0 : 1,
+                                borderColor: theme.colors.border
+                            }
+                        ]}>
                         {/* Personal Data Section */}
                         <SectionHeader title="Datos personales" />
 
@@ -231,7 +232,7 @@ export default function ProfileScreen({ navigation }: any) {
                 </View>
             </Modal>
 
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -239,30 +240,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    header: {
-        backgroundColor: lightTheme.colors.primary,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 24,
-        paddingTop: Platform.OS === 'ios' ? 10 : 20,
-        paddingBottom: 50,
-    },
-    backButton: {
-        padding: 5,
-        marginLeft: -5,
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#FFF',
-    },
     contentScroll: {
         flex: 1,
         marginTop: -30,
         zIndex: 1,
-        borderTopLeftRadius: 32,
-        borderTopRightRadius: 32,
     },
     scrollContent: {
         flexGrow: 1,
@@ -278,9 +259,7 @@ const styles = StyleSheet.create({
         minHeight: 600,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
         shadowRadius: 10,
-        elevation: 8,
     },
     sectionTitle: {
         fontSize: 18,

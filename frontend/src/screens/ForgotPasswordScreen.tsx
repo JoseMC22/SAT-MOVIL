@@ -16,6 +16,7 @@ import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { authService } from '../services/api';
 import { ArrowLeft, Mail, Key, Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react-native';
+import { AppHeader } from '../components/AppHeader';
 
 export default function ForgotPasswordScreen({ navigation }: any) {
     const { theme, isDarkMode } = useTheme();
@@ -92,25 +93,25 @@ export default function ForgotPasswordScreen({ navigation }: any) {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={lightTheme.colors.primary} />
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <AppHeader title="Recuperar Contraseña" />
 
-            {/* Blue Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ArrowLeft color="#FFF" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Recuperar Contraseña</Text>
-                <View style={{ width: 40 }} />
-            </View>
-
-            <View style={{ flex: 1, backgroundColor: theme.colors.white }}>
+            <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
                 <ScrollView 
                     style={styles.contentScroll}
                     contentContainerStyle={styles.scrollContent} 
                     showsVerticalScrollIndicator={false}
                 >
-                    <View style={[styles.formCard, { backgroundColor: theme.colors.white }]}>
+                    <View style={[
+                        styles.formCard, 
+                        { 
+                            backgroundColor: theme.colors.background,
+                            shadowOpacity: isDarkMode ? 0 : 0.05,
+                            elevation: isDarkMode ? 0 : 2,
+                            borderTopWidth: isDarkMode ? 0 : 1,
+                            borderColor: theme.colors.border
+                        }
+                    ]}>
                         <View style={styles.iconContainer}>
                             <View style={[styles.iconCircle, { backgroundColor: isDarkMode ? '#1E293B' : '#F0F7FF' }]}>
                                 <Key color={theme.colors.primary} size={40} />
@@ -218,34 +219,13 @@ export default function ForgotPasswordScreen({ navigation }: any) {
                     </View>
                 </ScrollView>
             </View>
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: lightTheme.colors.background,
-    },
-    header: {
-        backgroundColor: lightTheme.colors.primary,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 24,
-        paddingTop: Platform.OS === 'ios' ? 10 : 20,
-        paddingBottom: 60, // Extra space for overlap
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#FFF',
-    },
-    backButton: {
-        padding: 8,
-        marginLeft: -8,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.1)',
     },
     contentScroll: {
         flex: 1,
@@ -262,9 +242,7 @@ const styles = StyleSheet.create({
         minHeight: 600,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
         shadowRadius: 10,
-        elevation: 8,
     },
     iconContainer: {
         alignItems: 'center',

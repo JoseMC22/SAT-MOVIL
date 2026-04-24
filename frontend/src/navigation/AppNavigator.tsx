@@ -15,13 +15,14 @@ import PapeletaInquiryScreen from '../screens/PapeletaInquiryScreen';
 import PapeletaResultsScreen from '../screens/PapeletaResultsScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import TermsAndConditionsScreen from '../screens/TermsAndConditionsScreen';
 import { theme } from '../theme';
 
 const Stack = createNativeStackNavigator();
 
-export function AppNavigator() {
+export function AppNavigator({ onReady }: { onReady: () => void }) {
     return (
-        <NavigationContainer>
+        <NavigationContainer onReady={onReady}>
             <Stack.Navigator
                 initialRouteName="Login"
                 screenOptions={{
@@ -98,6 +99,11 @@ export function AppNavigator() {
                 <Stack.Screen
                     name="Profile"
                     component={ProfileScreen}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="TermsAndConditions"
+                    component={TermsAndConditionsScreen}
                     options={{ headerShown: false }}
                 />
             </Stack.Navigator>

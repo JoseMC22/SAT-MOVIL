@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, SafeAreaView, Image } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
@@ -20,7 +20,6 @@ export default function LoginScreen({ navigation }: any) {
         setLoading(true);
         setError('');
         try {
-            //console.log('Attempting login with:', username);
             const data = await authService.login(username, password);
             await login(data.user, data.access_token);
             navigation.replace('Menu');
@@ -35,6 +34,22 @@ export default function LoginScreen({ navigation }: any) {
             setLoading(false);
         }
     };
+
+    const handleGuestLogin = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const data = await authService.loginGuest();
+            await login(data.user, data.access_token);
+            navigation.replace('Menu');
+        } catch (e: any) {
+            console.error('Guest login error:', e);
+            setError('Error al iniciar como invitado. Intente de nuevo.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -52,19 +67,20 @@ export default function LoginScreen({ navigation }: any) {
                             {isDarkMode ? (
                                 <Sun size={20} color={theme.colors.secondary} />
                             ) : (
-                                <Moon size={20} color={theme.colors.text} />
+                                <Moon size={20} color={'#005696'} />
                             )}
                         </TouchableOpacity>
                     </View>
 
                     {/* Logo Section */}
                     <View style={styles.header}>
-                        <View style={styles.logoRow}>
-                            <Text style={[styles.logoTextBlue, { color: '#005696' }]}>SAT</Text>
-                            <Text style={[styles.logoTextYellow, { color: '#FBC02D' }]}>ICA</Text>
-                        </View>
+                        <Image
+                            source={require('../../assets/logo_sat_2026-remove.png')}
+                            style={styles.logo}
+                            resizeMode="contain"
+                        />
                         <View style={[styles.logoUnderline, { backgroundColor: theme.colors.primary }]} />
-                        <Text style={[styles.subtitle, { color: isDarkMode ? theme.colors.slate : '#64748B' }]}>
+                        <Text style={[styles.subtitle, { color: isDarkMode ? theme.colors.slate : '#64748B', fontFamily: theme.fonts.bold }]}>
                             SERVICIO DE ADMINISTRACIÓN{"\n"}TRIBUTARIA DE ICA
                         </Text>
                     </View>
@@ -99,11 +115,11 @@ export default function LoginScreen({ navigation }: any) {
                                 style={styles.forgotPassword}
                                 onPress={() => navigation.navigate('ForgotPassword')}
                             >
-                                <Text style={[styles.forgotPasswordText, { color: theme.colors.primary }]}>¿Olvidó su contraseña?</Text>
+                                <Text style={[styles.forgotPasswordText, { color: theme.colors.primary, fontFamily: theme.fonts.medium }]}>¿Olvidó su contraseña?</Text>
                             </TouchableOpacity>
                         </View>
 
-                        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                        {error ? <Text style={[styles.errorText, { color: theme.colors.error, fontFamily: theme.fonts.medium }]}>{error}</Text> : null}
 
                         <Button
                             title="Iniciar Sesión"
@@ -115,23 +131,33 @@ export default function LoginScreen({ navigation }: any) {
 
                         {/* Divider Section */}
                         <View style={styles.dividerContainer}>
-                            <View style={[styles.line, { backgroundColor: theme.colors.border }]} />
-                            <Text style={[styles.dividerText, { color: theme.colors.slate }]}>¿Nuevo por aquí?</Text>
+                            {/* <View style={[styles.line, { backgroundColor: theme.colors.border }]} />
+                            <Text style={[styles.dividerText, { color: theme.colors.slate, fontFamily: theme.fonts.medium }]}>¿Nuevo por aquí?</Text> */}
                             <View style={[styles.line, { backgroundColor: theme.colors.border }]} />
                         </View>
 
                         <Button
                             variant="outline"
-                            title="No tengo cuenta, registrarme"
+                            title="¿Nuevo por aquí? Regístrate"
                             onPress={() => navigation.navigate('Register')}
                             textColor={theme.colors.secondary}
                             icon={<UserPlus size={20} color={theme.colors.primary} />}
                         />
+
+                        <TouchableOpacity
+                            onPress={handleGuestLogin}
+                            style={styles.guestButton}
+                            disabled={loading}
+                        >
+                            <Text style={[styles.guestButtonText, { color: theme.colors.slate, fontFamily: theme.fonts.medium }]}>
+                                Continuar como invitado
+                            </Text>
+                        </TouchableOpacity>
                     </View>
 
                     {/* Footer Section */}
                     <View style={styles.footer}>
-                        <Text style={[styles.footerText, { color: theme.colors.slate }]}>
+                        <Text style={[styles.footerText, { color: theme.colors.slate, fontFamily: theme.fonts.medium }]}>
                             Recaudamos para el progreso de Ica{"\n"}
                             v 2.0.4 • SAT-ICA MOVIL
                         </Text>
@@ -148,18 +174,18 @@ const styles = StyleSheet.create({
     },
     scroll: {
         flexGrow: 1,
-        paddingHorizontal: 16, // Use values directly if preferred or spacing
+        paddingHorizontal: 16,
         paddingBottom: 32,
     },
     topActions: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
-        paddingVertical: 16,
+        paddingTop: Platform.OS === 'ios' ? 40 : 10,
+        paddingHorizontal: 16,
     },
     darkModeButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        padding: 8,
+        borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
         shadowColor: '#000',
@@ -173,19 +199,10 @@ const styles = StyleSheet.create({
         marginTop: 20,
         marginBottom: 40,
     },
-    logoRow: {
-        flexDirection: 'row',
-        alignItems: 'baseline',
-    },
-    logoTextBlue: {
-        fontSize: 60,
-        fontWeight: '900',
-        letterSpacing: -2,
-    },
-    logoTextYellow: {
-        fontSize: 60,
-        fontWeight: '900',
-        letterSpacing: -2,
+    logo: {
+        width: 180,
+        height: 100,
+        marginBottom: 8,
     },
     logoUnderline: {
         height: 3,
@@ -196,7 +213,6 @@ const styles = StyleSheet.create({
     },
     subtitle: {
         fontSize: 10,
-        fontWeight: '700',
         textAlign: 'center',
         marginTop: 12,
         letterSpacing: 2.5,
@@ -215,14 +231,11 @@ const styles = StyleSheet.create({
     },
     forgotPasswordText: {
         fontSize: 12,
-        fontWeight: '600',
-        color: '#005696',
     },
     errorText: {
         marginBottom: 8,
         textAlign: 'center',
         fontSize: 13,
-        fontWeight: '500',
     },
     dividerContainer: {
         flexDirection: 'row',
@@ -236,7 +249,6 @@ const styles = StyleSheet.create({
     dividerText: {
         marginHorizontal: 16,
         fontSize: 12,
-        fontWeight: '600',
     },
     footer: {
         marginTop: 'auto',
@@ -247,6 +259,14 @@ const styles = StyleSheet.create({
         fontSize: 10,
         textAlign: 'center',
         lineHeight: 16,
-        fontWeight: '500',
+    },
+    guestButton: {
+        marginTop: 20,
+        padding: 10,
+        alignItems: 'center',
+    },
+    guestButtonText: {
+        fontSize: 14,
+        textDecorationLine: 'underline',
     },
 });

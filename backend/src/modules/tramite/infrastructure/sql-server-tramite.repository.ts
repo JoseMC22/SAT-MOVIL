@@ -74,6 +74,7 @@ export class SqlServerTramiteRepository implements TramiteRepository {
                             m.nEstadoMovimiento AS estado_mov,
                             t.fFecRegistro,
                             t.nFlgEstado,
+                            isnull(u.nDias,45) dias,
                             ROW_NUMBER() OVER (
                                 PARTITION BY t.iCodTramite 
                                 ORDER BY m.fFecDerivar DESC
@@ -85,6 +86,8 @@ export class SqlServerTramiteRepository implements TramiteRepository {
                             ON t.iCodTramite = m.iCodTramite
                         INNER JOIN dbo.Tra_M_Oficinas o 
                             ON m.iCodOficinaDerivar = o.iCodOficina
+                        INNER JOIN dbo.Tra_M_Tupa u 
+                            ON t.iCodTupa = u.iCodTupa
                         WHERE LTRIM(RTRIM(r.nNumDocumento)) = @dni
                     ) AS x
                     WHERE rn = 1
@@ -111,7 +114,8 @@ export class SqlServerTramiteRepository implements TramiteRepository {
                     this.getStatusLabel(row.nFlgEstado, row.estado_mov),
                     diasTranscurridos,
                     estaFinalizado,
-                    estaFinalizado ? 100 : Math.min(Math.round((diasTranscurridos / 45) * 100), 100)
+                    estaFinalizado ? 100 : Math.min(Math.round((diasTranscurridos / row.dias) * 100), 100),
+                    row.dias
                 );
             });
         } catch (err) {

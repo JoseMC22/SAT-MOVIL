@@ -10,6 +10,7 @@ import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { MailerService } from '../../../shared/infrastructure/mailer.service.js';
 import { Public } from './public.decorator.js';
+import * as crypto from 'crypto';
 
 const LoginSchema = z.object({
     username: z.string().min(1),
@@ -68,6 +69,30 @@ export class AuthController {
         }
         throw new UnauthorizedException('Credenciales Inválidas');
     }
+
+    @Public()
+    @Post('login-guest')
+    async loginGuest() {
+        const guestId = crypto.randomUUID();
+        const payload = {
+            username: 'Invitado',
+            sub: guestId,
+            isGuest: true
+        };
+        const token = this.jwtService.sign(payload);
+
+        // Store guest token in Redis with same 10m TTL
+        await this.redis.set(`token:${token}`, `guest:${guestId}`, 'EX', 600);
+
+        return {
+            access_token: token,
+            user: {
+                nombre: 'Invitado',
+                isGuest: true
+            }
+        };
+    }
+
 
     @Post('logout')
     async logout(@Req() req: any) {

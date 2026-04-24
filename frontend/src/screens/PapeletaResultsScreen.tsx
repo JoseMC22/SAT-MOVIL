@@ -3,6 +3,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Sta
 import { useTheme } from '../context/ThemeContext';
 import { lightTheme } from '../theme';
 import { ArrowLeft, Calendar, FileText, Info, CheckCircle2, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react-native';
+import { papeletaService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { useEffect } from 'react';
+import Skeleton from '../components/Skeleton'; // We'll use base skeletons or a simplified card one
+import { AppHeader } from '../components/AppHeader';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -10,9 +15,28 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 export default function PapeletaResultsScreen({ route, navigation }: any) {
-    const { results, searchCriteria } = route.params;
+    const { searchCriteria } = route.params;
     const { theme, isDarkMode } = useTheme();
+    const { token } = useAuth();
+
+    const [results, setResults] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
     const [expandedIds, setExpandedIds] = useState<number[]>([]);
+
+    useEffect(() => {
+        const fetchResults = async () => {
+            if (!token) return;
+            try {
+                const data = await papeletaService.getPapeletas(searchCriteria, token);
+                setResults(data || []);
+            } catch (error) {
+                console.error('Error fetching papeletas:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchResults();
+    }, []);
 
     const totalAmount = results.reduce((sum: number, item: any) => sum + (item.total_deuda || 0), 0);
 
@@ -49,6 +73,7 @@ export default function PapeletaResultsScreen({ route, navigation }: any) {
                         <View style={styles.cardHeaderInfo}>
                             <Text style={[styles.cardTitleText, { color: theme.colors.text }]}>{item.tipode1 + ' ' + item.cod_pred}</Text>
                             <Text style={[styles.cardSubtitleText, { color: theme.colors.slate }]}>Placa: {item.cod_pred1}</Text>
+                            <Text style={[styles.cardSubtitleText, { color: theme.colors.slate }]}>Conductor: {item.nombre}</Text>
                         </View>
                         <Text style={[styles.cardAmount, { color: theme.colors.text }]}>S/ {(item.total_deuda || 0).toFixed(2)}</Text>
                     </View>
@@ -100,35 +125,45 @@ export default function PapeletaResultsScreen({ route, navigation }: any) {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={theme.colors.primary} />
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <AppHeader title="Resultado Papeletas" />
 
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => navigation.goBack()}
-                >
-                    <ArrowLeft color="#FFF" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Resultado Papeletas</Text>
-                <View style={{ width: 40 }} />
-            </View>
-
-            <View style={{ flex: 1, backgroundColor: theme.colors.white }}>
+            <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
                 <ScrollView
                     style={styles.contentScroll}
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
-                    <View style={[styles.formCard, { backgroundColor: theme.colors.white }]}>
-                        {/* Summary Banner */}
-                        <View style={[styles.summaryBanner, { backgroundColor: theme.colors.card }]}>
-                            <View style={styles.summaryHeader}>
-                                <Info color="#FFF" size={20} />
-                                <Text style={[styles.summaryTitle, { color: theme.colors.slate }]}>Criterios de Búsqueda</Text>
-                            </View>
-                            <View style={[styles.summaryGrid, { backgroundColor: theme.colors.resultCard }]}>
+                    <View style={[
+                        styles.formCard,
+                        {
+                            backgroundColor: theme.colors.background,
+                            shadowOpacity: isDarkMode ? 0 : 0.05,
+                            elevation: isDarkMode ? 0 : 2,
+                            borderTopWidth: isDarkMode ? 0 : 1,
+                            borderColor: theme.colors.border
+                        }
+                    ]}>
+                        {/* Summary Header outside banner */}
+                        <View style={[styles.extraInfo, { paddingHorizontal: 24, marginBottom: 12, marginTop: 24 }]}>
+                            <Info color={theme.colors.primary} size={18} />
+                            <Text style={[styles.extraInfoText, { color: theme.colors.text, fontWeight: '700', fontSize: 14 }]}>
+                                Criterios de Búsqueda
+                            </Text>
+                        </View>
+
+                        {/* Summary Banner Card */}
+                        <View style={[
+                            styles.summaryBanner,
+                            {
+                                backgroundColor: theme.colors.card,
+                                borderRadius: 24,
+                                marginHorizontal: 20,
+                                padding: 0,
+                                overflow: 'hidden'
+                            }
+                        ]}>
+                            <View style={[styles.summaryGrid, { backgroundColor: theme.colors.resultCard, paddingVertical: 18 }]}>
                                 <View style={styles.summaryItem}>
                                     <Text style={[styles.summaryLabel, { color: theme.colors.headerCard }]}>PLACA</Text>
                                     <Text style={[styles.summaryValue, { color: theme.colors.bodyCard }]}>{searchCriteria.placa || '--'}</Text>
@@ -148,54 +183,52 @@ export default function PapeletaResultsScreen({ route, navigation }: any) {
 
                         {/* Main Content */}
                         <View style={styles.resultsContainer}>
-                            <View style={[styles.totalSection, { backgroundColor: isDarkMode ? '#ffffff1a' : '#F8FAFC' }]}>
-                                <Text style={[styles.totalLabel, { color: theme.colors.slate }]}>Monto Total</Text>
-                                <Text style={[styles.totalAmount, { color: theme.colors.primary }]}>S/ {totalAmount.toFixed(2)}</Text>
-                            </View>
-
-                            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Papeletas Encontradas</Text>
-
-                            {results.length > 0 ? (
-                                results.map((item: any, index: number) => (
-                                    <PapeletaCard key={index} item={item} index={index} />
-                                ))
-                            ) : (
-                                <View style={styles.centered}>
-                                    <Text style={[styles.emptyText, { color: theme.colors.slate }]}>No se encontraron resultados</Text>
+                            {loading ? (
+                                <View style={{ width: '100%', paddingTop: 10 }}>
+                                    {[1, 2, 3].map(i => (
+                                        <View key={i} style={[styles.card, { backgroundColor: theme.colors.white, height: 100, justifyContent: 'center' }]}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                <Skeleton width={48} height={48} borderRadius={16} />
+                                                <View style={{ marginLeft: 16, flex: 1 }}>
+                                                    <Skeleton width="60%" height={16} style={{ marginBottom: 8 }} />
+                                                    <Skeleton width="40%" height={12} />
+                                                </View>
+                                                <Skeleton width={80} height={20} />
+                                            </View>
+                                        </View>
+                                    ))}
                                 </View>
+                            ) : (
+                                <>
+                                    <View style={[styles.totalSection, { backgroundColor: isDarkMode ? '#ffffff1a' : '#F8FAFC' }]}>
+                                        <Text style={[styles.totalLabel, { color: theme.colors.slate }]}>Monto Total</Text>
+                                        <Text style={[styles.totalAmount, { color: theme.colors.primary }]}>S/ {totalAmount.toFixed(2)}</Text>
+                                    </View>
+
+                                    <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Papeletas Encontradas</Text>
+
+                                    {results.length > 0 ? (
+                                        results.map((item: any, index: number) => (
+                                            <PapeletaCard key={index} item={item} index={index} />
+                                        ))
+                                    ) : (
+                                        <View style={styles.centered}>
+                                            <Text style={[styles.emptyText, { color: theme.colors.slate }]}>No se encontraron resultados</Text>
+                                        </View>
+                                    )}
+                                </>
                             )}
                         </View>
                     </View>
                 </ScrollView>
             </View>
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: lightTheme.colors.background,
-    },
-    header: {
-        backgroundColor: lightTheme.colors.primary,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 24,
-        paddingTop: Platform.OS === 'ios' ? 10 : 20,
-        paddingBottom: 60, // Extra space for overlap
-    },
-    backButton: {
-        padding: 8,
-        marginLeft: -8,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#FFF',
     },
     contentScroll: {
         flex: 1,
@@ -212,9 +245,7 @@ const styles = StyleSheet.create({
         minHeight: 600,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
         shadowRadius: 10,
-        elevation: 8,
         overflow: 'hidden',
     },
     summaryBanner: {
@@ -377,5 +408,17 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 16,
         textAlign: 'center',
+    },
+    extraInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 8,
+        paddingHorizontal: 4,
+    },
+    extraInfoText: {
+        fontSize: 12,
+        flex: 1,
+        lineHeight: 16,
     },
 });

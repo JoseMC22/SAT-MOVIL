@@ -6,7 +6,8 @@ import { useTheme } from '../context/ThemeContext';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { authService } from '../services/api';
-import { User, CheckCircle2, FileText, Camera, Image as ImageIcon, ArrowLeft, Send, Contact, ShieldCheck } from 'lucide-react-native';
+import { User, CheckCircle2, FileText, Camera, Image as ImageIcon, ArrowLeft, Send, Contact, ShieldCheck, CheckSquare, Square } from 'lucide-react-native';
+import { AppHeader } from '../components/AppHeader';
 
 export default function RegisterScreen({ navigation }: any) {
     const { theme, isDarkMode } = useTheme();
@@ -24,6 +25,7 @@ export default function RegisterScreen({ navigation }: any) {
     const [dniCopyDoc, setDniCopyDoc] = useState<any>(null);
     const [dniCopyName, setDniCopyName] = useState<string>('');
     const [loading, setLoading] = useState(false);
+    const [termsAccepted, setTermsAccepted] = useState(false);
 
     const pickImage = async (type: 'front' | 'back') => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -78,6 +80,11 @@ export default function RegisterScreen({ navigation }: any) {
     };
 
     const handleRegister = async () => {
+        if (!termsAccepted) {
+            Alert.alert('Términos y condiciones', 'Debe aceptar los términos y condiciones para continuar.');
+            return;
+        }
+
         if (!form.nombres || !form.apellidos || !form.dni || !form.codigoContribuyente || !form.celular || !form.email) {
             Alert.alert('Error', 'Por favor complete todos los campos obligatorios (*)');
             return;
@@ -119,14 +126,14 @@ export default function RegisterScreen({ navigation }: any) {
 
             <View style={styles.pickerGrid}>
                 <TouchableOpacity
-                    style={[styles.pickerCard, { backgroundColor: theme.colors.white, borderColor: theme.colors.border }]}
+                    style={[styles.pickerCard, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
                     onPress={onTakePhoto}
                 >
                     <Camera color={theme.colors.slate} size={28} />
                     <Text style={[styles.pickerCardText, { color: theme.colors.slate }]}>CÁMARA</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                    style={[styles.pickerCard, { backgroundColor: theme.colors.white, borderColor: theme.colors.border }]}
+                    style={[styles.pickerCard, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
                     onPress={onPickImage}
                 >
                     <ImageIcon color={theme.colors.slate} size={28} />
@@ -143,7 +150,7 @@ export default function RegisterScreen({ navigation }: any) {
                     </View>
                 </View>
             ) : (
-                <View style={[styles.placeholderBox, { backgroundColor: theme.colors.white, borderColor: theme.colors.border }]}>
+                <View style={[styles.placeholderBox, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}>
                     <Text style={[styles.placeholderText, { color: theme.colors.slate }]}>Pendiente de adjuntar</Text>
                 </View>
             )}
@@ -151,32 +158,29 @@ export default function RegisterScreen({ navigation }: any) {
     );
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={theme.colors.primary} />
-
-            {/* Header Rediseñado */}
-            <View style={[styles.header, { backgroundColor: theme.colors.primary }]}>
-                <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => navigation.goBack()}
-                >
-                    <ArrowLeft color="#FFF" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Solicitud de Registro</Text>
-                <View style={{ width: 40 }} />
-            </View>
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <AppHeader title="Solicitud de Registro" />
 
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
             >
-                <View style={{ flex: 1, backgroundColor: theme.colors.white }}>
+                <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
                     <ScrollView
                         style={styles.contentScroll}
                         contentContainerStyle={styles.scrollContent}
                         showsVerticalScrollIndicator={false}
                     >
-                        <View style={[styles.formCard, { backgroundColor: theme.colors.white }]}>
+                        <View style={[
+                            styles.formCard,
+                            {
+                                backgroundColor: theme.colors.background,
+                                shadowOpacity: isDarkMode ? 0 : 0.05,
+                                elevation: isDarkMode ? 0 : 2,
+                                borderTopWidth: isDarkMode ? 0 : 1,
+                                borderColor: theme.colors.border
+                            }
+                        ]}>
                             <View style={styles.formContent}>
                                 <Text style={[styles.mainTitle, { color: theme.colors.primary }]}>Crear Cuenta</Text>
                                 <Text style={[styles.mainSubtitle, { color: theme.colors.slate }]}>
@@ -274,7 +278,7 @@ export default function RegisterScreen({ navigation }: any) {
                                     <View style={styles.imageSection}>
                                         <Text style={[styles.stepTitle, { color: theme.colors.text }]}>3. Copia de DNI (Imagen o PDF) *</Text>
                                         <TouchableOpacity
-                                            style={[styles.documentButton, { backgroundColor: theme.colors.white, borderColor: theme.colors.border }]}
+                                            style={[styles.documentButton, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
                                             onPress={pickDocument}
                                         >
                                             <View style={styles.documentButtonContent}>
@@ -295,6 +299,28 @@ export default function RegisterScreen({ navigation }: any) {
 
                                 {/* BOTÓN ENVÍO */}
                                 <View style={styles.footerActions}>
+                                    <TouchableOpacity
+                                        style={styles.checkboxContainer}
+                                        onPress={() => setTermsAccepted(!termsAccepted)}
+                                        activeOpacity={0.7}
+                                    >
+                                        {termsAccepted ? (
+                                            <CheckSquare color={theme.colors.primary} size={24} />
+                                        ) : (
+                                            <Square color={theme.colors.slate} size={24} />
+                                        )}
+                                        <Text style={[styles.disclaimerText, { color: theme.colors.slate }]}>
+                                            Acepto los{' '}
+                                            <Text
+                                                style={{ color: theme.colors.primary, fontFamily: theme.fonts.bold, textDecorationLine: 'underline' }}
+                                                onPress={() => navigation.navigate('TermsAndConditions')}
+                                            >
+                                                términos y condiciones
+                                            </Text>
+                                            {' '}del Servicio de Administración Tributaria.
+                                        </Text>
+                                    </TouchableOpacity>
+
                                     <Button
                                         title="ENVIAR SOLICITUD"
                                         onPress={handleRegister}
@@ -302,41 +328,19 @@ export default function RegisterScreen({ navigation }: any) {
                                         icon={<Send color="#FFF" size={20} />}
                                         iconPosition="right"
                                     />
-                                    <Text style={[styles.disclaimerText, { color: theme.colors.slate }]}>
-                                        Al enviar, usted acepta los términos y condiciones del Servicio de Administración Tributaria.
-                                    </Text>
                                 </View>
                             </View>
                         </View>
                     </ScrollView>
                 </View>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 24,
-        paddingTop: Platform.OS === 'ios' ? 10 : 20,
-        paddingBottom: 60, // Extra space for overlap
-    },
-    backButton: {
-        padding: 8,
-        marginLeft: -8,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#FFF',
     },
     contentScroll: {
         flex: 1,
@@ -352,9 +356,7 @@ const styles = StyleSheet.create({
         minHeight: 600,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
         shadowRadius: 10,
-        elevation: 8,
     },
     formContent: {
         padding: 24,
@@ -477,11 +479,16 @@ const styles = StyleSheet.create({
         marginTop: 16,
         paddingBottom: 40,
     },
+    checkboxContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 20,
+        paddingHorizontal: 10,
+    },
     disclaimerText: {
-        fontSize: 11,
-        textAlign: 'center',
-        marginTop: 20,
+        fontSize: 12,
+        marginLeft: 10,
+        flex: 1,
         lineHeight: 18,
-        paddingHorizontal: 20,
     },
 });

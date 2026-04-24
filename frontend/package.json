@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "start": "dotenv -- expo start",
+    "android": "dotenv -- expo start --android",
+    "ios": "dotenv -- expo start --ios",
+    "web": "dotenv -- expo start --web"
   },
   "dependencies": {
+    "@expo-google-fonts/outfit": "^0.4.3",
     "@expo/metro-runtime": "^6.1.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/native": "^7.1.30",
@@ -18,8 +19,11 @@
     "expo": "~54.0.33",
     "expo-document-picker": "~14.0.8",
     "expo-file-system": "^55.0.11",
+    "expo-font": "~14.0.11",
     "expo-image-picker": "~17.0.10",
+    "expo-linear-gradient": "~15.0.8",
     "expo-sharing": "^55.0.14",
+    "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
     "lucide-react-native": "^0.575.0",
     "react": "19.1.0",
@@ -34,6 +38,7 @@
   "devDependencies": {
     "@types/react": "~19.1.0",
     "babel-preset-expo": "^54.0.10",
+    "dotenv-cli": "^11.0.0",
     "typescript": "~5.9.2"
   },
   "private": true

@@ -10,6 +10,10 @@ export const authService = {
         const response = await api.post('/auth/login', { username, password: pass });
         return response.data;
     },
+    loginGuest: async () => {
+        const response = await api.post('/auth/login-guest');
+        return response.data;
+    },
     logout: async (token: string) => {
         const response = await api.post('/auth/logout', {}, {
             headers: { Authorization: `Bearer ${token}` }
@@ -78,7 +82,7 @@ export const authService = {
         return response.data;
     },
     changePassword: async (currentPassword: string, newPassword: string, token: string) => {
-        const response = await api.post('/auth/change-password', 
+        const response = await api.post('/auth/change-password',
             { currentPassword, newPassword },
             { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -93,16 +97,22 @@ export const authService = {
 };
 
 export const debtService = {
-    getDebt: async (codigo: string, anno: string, tipo: string, predio: string, token: string) => {
+    getDebt: async (codigo: string, tipo: string, predio: string, token: string, anno?: string) => {
+        const params: any = { codigo, tipo, predio };
+        if (anno) params.anno = anno;
+
         const response = await api.get('/debt/consult', {
-            params: { codigo, anno, tipo, predio },
+            params,
             headers: { Authorization: `Bearer ${token}` },
         });
         return response.data;
     },
-    getSubOptions: async (codigo: string, anno: string, tipo: string, token: string) => {
+    getSubOptions: async (codigo: string, tipo: string, token: string, anno?: string) => {
+        const params: any = { codigo, tipo };
+        if (anno) params.anno = anno;
+
         const response = await api.get('/debt/sub-options', {
-            params: { codigo, anno, tipo },
+            params,
             headers: { Authorization: `Bearer ${token}` },
         });
         return response.data;
@@ -148,8 +158,9 @@ export const messageService = {
 };
 
 export const tramiteService = {
-    getMyTramites: async (token: string) => {
+    getMyTramites: async (token: string, dni?: string) => {
         const response = await api.get('/tramite', {
+            params: { dni },
             headers: { Authorization: `Bearer ${token}` },
         });
         return response.data;

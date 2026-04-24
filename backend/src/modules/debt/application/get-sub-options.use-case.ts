@@ -8,7 +8,7 @@ export class GetSubOptionsUseCase {
         private readonly debtRepository: DebtRepository,
     ) { }
 
-    async execute(codigo: string, anno: string, tipo: string): Promise<SubOption[]> {
-        return this.debtRepository.findSubOptions(codigo, anno, tipo);
+    async execute(codigo: string, tipo: string, anno?: string): Promise<SubOption[]> {
+        return this.debtRepository.findSubOptions(codigo, tipo, anno);
     }
 }

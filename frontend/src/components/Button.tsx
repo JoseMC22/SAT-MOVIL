@@ -12,6 +12,7 @@ interface ButtonProps {
     color?: string;
     textColor?: string;
     style?: any;
+    disabled?: boolean;
 }
 
 export const Button = ({
@@ -23,7 +24,8 @@ export const Button = ({
     iconPosition = 'left',
     color,
     textColor,
-    style
+    style,
+    disabled
 }: ButtonProps) => {
     const { theme } = useTheme();
 
@@ -48,8 +50,8 @@ export const Button = ({
                 styles.button,
                 { backgroundColor },
                 variant === 'outline' && { borderColor, borderWidth: 1.5 },
-                loading && styles.disabled,
-                variant === 'primary' && {
+                (loading || disabled) && styles.disabled,
+                variant === 'primary' && !disabled && {
                     shadowColor: theme.colors.primary,
                     shadowOffset: { width: 0, height: 4 },
                     shadowOpacity: 0.3,
@@ -59,7 +61,7 @@ export const Button = ({
                 style,
             ]}
             onPress={onPress}
-            disabled={loading}
+            disabled={loading || disabled}
         >
             {loading ? (
                 <ActivityIndicator color={variant === 'outline' ? theme.colors.primary : '#FFFFFF'} />

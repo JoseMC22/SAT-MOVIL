@@ -20,6 +20,7 @@ export class Debt {
     public readonly tot_pagado?: number,
     public readonly descuento?: number,
     public readonly fec_venc?: string,
+    public readonly dir?: string,
   ) { }
 }
 
@@ -29,6 +30,6 @@ export interface SubOption {
 }
 
 export interface DebtRepository {
-  findDebt(codigo: string, anno: string, tipo: string, predio?: string): Promise<Debt[]>;
-  findSubOptions(codigo: string, anno: string, tipo: string): Promise<SubOption[]>;
+  findDebt(codigo: string, tipo: string, anno?: string, predio?: string): Promise<Debt[]>;
+  findSubOptions(codigo: string, tipo: string, anno?: string): Promise<SubOption[]>;
 }

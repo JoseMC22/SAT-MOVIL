@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthController } from './infrastructure/auth.controller.js';
 import { SqlServerAuthRepository } from './infrastructure/sql-server-auth.repository.js';
 import { JwtStrategy } from './infrastructure/jwt.strategy.js';
+import { GuestLimitGuard } from './infrastructure/guest-limit.guard.js';
 
 @Module({
     imports: [
@@ -20,11 +21,12 @@ import { JwtStrategy } from './infrastructure/jwt.strategy.js';
     controllers: [AuthController],
     providers: [
         JwtStrategy,
+        GuestLimitGuard,
         {
             provide: 'AuthRepository',
             useClass: SqlServerAuthRepository,
         },
     ],
-    exports: [JwtModule, 'AuthRepository'],
+    exports: [JwtModule, 'AuthRepository', GuestLimitGuard],
 })
 export class AuthModule { }

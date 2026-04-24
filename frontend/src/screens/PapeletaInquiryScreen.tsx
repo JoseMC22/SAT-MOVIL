@@ -8,6 +8,7 @@ import { Select } from '../components/Select';
 import { ArrowLeft, Search, Info } from 'lucide-react-native';
 import { papeletaService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { AppHeader } from '../components/AppHeader';
 
 const YEAR_OPTIONS = [
     { label: 'Todos los años', value: '' },
@@ -49,70 +50,51 @@ export default function PapeletaInquiryScreen({ navigation }: any) {
     const [nroPapeleta, setNroPapeleta] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const handleSearch = async () => {
+    const handleSearch = () => {
         if (!anno && !placa && !dni && !nroPapeleta) {
-            alert('Por favor ingrese al menos un criterio de búsqueda');
+            alert('Por favor, ingrese al menos un criterio de búsqueda');
             return;
         }
 
         setLoading(true);
-        try {
-            const results = await papeletaService.getPapeletas({ anno, placa, dni, nroPapeleta }, token || undefined);
-
-            if (!results || results.length === 0) {
-                alert('No se encontraron papeletas con los criterios seleccionados.');
-                return;
-            }
-
+        // We still use a small timeout to show immediate feedback on the button 
+        // before navigating for a smoother transition
+        setTimeout(() => {
+            setLoading(false);
             navigation.navigate('PapeletaResults', {
-                results: results,
                 searchCriteria: { anno, placa, dni, nroPapeleta }
             });
-        } catch (e: any) {
-            alert('Error consultando papeletas. ' + (e.response?.data?.message || 'Intente nuevamente.'));
-        } finally {
-            setLoading(false);
-        }
+        }, 300);
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={theme.colors.primary} />
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <AppHeader title="Consulta de Papeletas" />
 
-            {/* Blue Header */}
-            <View style={styles.header}>
-                <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => navigation.goBack()}
-                >
-                    <ArrowLeft color="#FFF" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Consulta de Papeletas</Text>
-                <View style={{ width: 40 }} />
-            </View>
-
-            <View style={{ flex: 1, backgroundColor: theme.colors.white }}>
+            <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
                 <ScrollView
                     style={styles.contentScroll}
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
                     {/* White Container Overlapping Header */}
-                    <View style={[styles.formCard, { backgroundColor: theme.colors.white }]}>
+                    <View style={[
+                        styles.formCard,
+                        {
+                            backgroundColor: theme.colors.background,
+                            shadowOpacity: isDarkMode ? 0 : 0.05,
+                            elevation: isDarkMode ? 0 : 2,
+                            borderTopWidth: isDarkMode ? 0 : 1,
+                            borderColor: theme.colors.border
+                        }
+                    ]}>
                         <View style={styles.form}>
-
-                            <Select
-                                label="Año"
-                                options={YEAR_OPTIONS}
-                                value={anno}
-                                onSelect={setAnno}
-                            />
 
                             <Input
                                 label="Placa"
                                 value={placa}
-                                onChangeText={setPlaca}
-                                placeholder="Ej: ABC-123"
+                                onChangeText={text => setPlaca(text.toUpperCase())}
+                                placeholder="Ej: ABC123"
                                 autoCapitalize="characters"
                             />
 
@@ -122,6 +104,13 @@ export default function PapeletaInquiryScreen({ navigation }: any) {
                                 onChangeText={setDni}
                                 placeholder="Ingrese DNI"
                                 keyboardType="numeric"
+                            />
+
+                            <Select
+                                label="Año"
+                                options={YEAR_OPTIONS}
+                                value={anno}
+                                onSelect={setAnno}
                             />
 
                             <Input
@@ -153,33 +142,13 @@ export default function PapeletaInquiryScreen({ navigation }: any) {
                     </View>
                 </ScrollView>
             </View>
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-    },
-    header: {
-        backgroundColor: lightTheme.colors.primary,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 24,
-        paddingTop: Platform.OS === 'ios' ? 10 : 20,
-        paddingBottom: 60, // Extra space for overlap
-    },
-    backButton: {
-        padding: 8,
-        marginLeft: -8,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#FFF',
     },
     contentScroll: {
         flex: 1,
@@ -197,9 +166,7 @@ const styles = StyleSheet.create({
         minHeight: 600,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
         shadowRadius: 10,
-        elevation: 8,
     },
     form: {
         width: '100%',

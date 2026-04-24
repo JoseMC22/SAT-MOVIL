@@ -9,7 +9,7 @@ export class GetDebtUseCase {
         private readonly debtRepository: DebtRepository,
     ) { }
 
-    async execute(codigo: string, anno: string, tipo: string, predio?: string): Promise<Debt[]> {
-        return this.debtRepository.findDebt(codigo, anno, tipo, predio);
+    async execute(codigo: string, tipo: string, anno?: string, predio?: string): Promise<Debt[]> {
+        return this.debtRepository.findDebt(codigo, tipo, anno, predio);
     }
 }

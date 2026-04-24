@@ -4,9 +4,11 @@ import { useTheme } from '../context/ThemeContext';
 import { lightTheme } from '../theme';
 import { messageService } from '../services/api'; // Changed import
 import { Mail, ChevronRight, Inbox, ArrowLeft } from 'lucide-react-native';
+import { MessageSkeleton } from '../components/SkeletonCards';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuth } from '../context/AuthContext'; // Added useAuth
+import { AppHeader } from '../components/AppHeader';
 
 export default function MessageBoxScreen({ navigation }: any) {
     const { theme, isDarkMode } = useTheme();
@@ -59,8 +61,8 @@ export default function MessageBoxScreen({ navigation }: any) {
             key={item.id}
             style={[
                 styles.messageCard,
-                { backgroundColor: theme.colors.white },
-                !item.isRead && { backgroundColor: isDarkMode ? '#334155' : '#F0F7FF', borderLeftColor: lightTheme.colors.primary, borderLeftWidth: 4 }
+                { backgroundColor: theme.colors.background, borderColor: theme.colors.border, borderWidth: 1 },
+                !item.isRead && { backgroundColor: isDarkMode ? '#1E293B' : '#F0F7FF', borderLeftColor: lightTheme.colors.primary, borderLeftWidth: 4 }
             ]}
             onPress={() => handlePressMessage(item)}
         >
@@ -86,28 +88,28 @@ export default function MessageBoxScreen({ navigation }: any) {
     );
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={lightTheme.colors.primary} />
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <AppHeader title="Buzón de Mensajes" />
 
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ArrowLeft color="#FFF" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Buzón de Mensajes</Text>
-                <View style={{ width: 40 }} />
-            </View>
-
-            <View style={{ flex: 1, backgroundColor: theme.colors.white }}>
+            <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
                 <ScrollView
                     style={styles.contentScroll}
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
-                    <View style={[styles.formCard, { backgroundColor: theme.colors.white }]}>
+                    <View style={[
+                        styles.formCard, 
+                        { 
+                            backgroundColor: theme.colors.background,
+                            shadowOpacity: isDarkMode ? 0 : 0.05,
+                            elevation: isDarkMode ? 0 : 2,
+                            borderTopWidth: isDarkMode ? 0 : 1,
+                            borderColor: theme.colors.border
+                        }
+                    ]}>
                         {loading ? (
-                            <View style={styles.centered}>
-                                <ActivityIndicator size="large" color={lightTheme.colors.primary} />
+                            <View style={{ width: '100%', paddingTop: 8 }}>
+                                {[1, 2, 3, 4, 5].map(i => <MessageSkeleton key={i} />)}
                             </View>
                         ) : messages.length === 0 ? (
                             <View style={styles.centered}>
@@ -120,34 +122,13 @@ export default function MessageBoxScreen({ navigation }: any) {
                     </View>
                 </ScrollView>
             </View>
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: lightTheme.colors.background,
-    },
-    header: {
-        backgroundColor: lightTheme.colors.primary,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: lightTheme.spacing.lg,
-        paddingTop: Platform.OS === 'ios' ? 10 : 20,
-        paddingBottom: 60, // Extra space for overlap
-    },
-    headerTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#FFF',
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        alignItems: 'center',
-        justifyContent: 'center',
     },
     contentScroll: {
         flex: 1,
@@ -165,9 +146,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
         shadowRadius: 10,
-        elevation: 8,
     },
     centered: {
         flex: 1,

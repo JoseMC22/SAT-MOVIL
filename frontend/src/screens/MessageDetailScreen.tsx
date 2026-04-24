@@ -8,6 +8,7 @@ import { es } from 'date-fns/locale';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useAuth } from '../context/AuthContext';
+import { AppHeader } from '../components/AppHeader';
 
 export default function MessageDetailScreen({ route, navigation }: any) {
     const { message } = route.params;
@@ -86,27 +87,27 @@ export default function MessageDetailScreen({ route, navigation }: any) {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={theme.colors.primary} />
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <AppHeader title="Detalle del Mensaje" />
 
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ArrowLeft color="#FFF" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Detalle del Mensaje</Text>
-                <View style={{ width: 40 }} />
-            </View>
-
-            <View style={{ flex: 1, backgroundColor: theme.colors.white }}>
+            <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
                 <ScrollView 
                     style={styles.contentScroll}
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
-                    <View style={[styles.formCard, { backgroundColor: theme.colors.white }]}>
+                    <View style={[
+                        styles.formCard, 
+                        { 
+                            backgroundColor: theme.colors.background,
+                            shadowOpacity: isDarkMode ? 0 : 0.05,
+                            elevation: isDarkMode ? 0 : 2,
+                            borderTopWidth: isDarkMode ? 0 : 1,
+                            borderColor: theme.colors.border
+                        }
+                    ]}>
                         {/* Message Header Info */}
-                        <View style={[styles.infoCard, { backgroundColor: isDarkMode ? '#2D3748' : '#F8FAFC' }]}>
+                        <View style={[styles.infoCard, { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', borderColor: theme.colors.border, borderWidth: isDarkMode ? 0 : 1 }]}>
                             <Text style={[styles.subject, { color: theme.colors.text }]}>{message.subject}</Text>
 
                             <View style={styles.metaRow}>
@@ -123,16 +124,16 @@ export default function MessageDetailScreen({ route, navigation }: any) {
                         </View>
 
                         {/* Message Body */}
-                        <View style={[styles.card, styles.bodyCard, { backgroundColor: isDarkMode ? '#2D3748' : '#F8FAFC' }]}>
+                        <View style={[styles.card, styles.bodyCard, { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', borderColor: theme.colors.border, borderWidth: isDarkMode ? 0 : 1 }]}>
                             <Text style={[styles.bodyText, { color: theme.colors.text }]}>{message.body}</Text>
                         </View>
 
                         {/* Attachments Section */}
                         {message.attachments && message.attachments.length > 0 && (
-                            <View style={[styles.attachmentsSection, styles.card, { backgroundColor: isDarkMode ? '#2D3748' : '#F8FAFC' }]}>
+                            <View style={[styles.attachmentsSection, styles.card, { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC', borderColor: theme.colors.border, borderWidth: isDarkMode ? 0 : 1 }]}>
                                 <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Documentos Adjuntos</Text>
                                 {message.attachments.map((adj: any) => (
-                                    <View key={adj.id} style={[styles.attachmentCard, { backgroundColor: theme.colors.white, borderColor: theme.colors.border }]}>
+                                    <View key={adj.id} style={[styles.attachmentCard, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}>
                                         <View style={styles.attachmentInfo}>
                                             <FileText color={theme.colors.primary} size={24} />
                                             <View style={styles.attachmentText}>
@@ -158,34 +159,13 @@ export default function MessageDetailScreen({ route, navigation }: any) {
                     </View>
                 </ScrollView>
             </View>
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: lightTheme.colors.background,
-    },
-    header: {
-        backgroundColor: lightTheme.colors.primary,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 24,
-        paddingTop: Platform.OS === 'ios' ? 10 : 20,
-        paddingBottom: 60, // Extra space for overlap
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#FFF',
     },
     contentScroll: {
         flex: 1,
@@ -203,9 +183,7 @@ const styles = StyleSheet.create({
         minHeight: 600,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
         shadowRadius: 10,
-        elevation: 8,
     },
     infoCard: {
         borderRadius: 16,

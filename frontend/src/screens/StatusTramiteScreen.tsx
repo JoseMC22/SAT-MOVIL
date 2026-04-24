@@ -2,21 +2,29 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, Platform, ActivityIndicator, RefreshControl } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { lightTheme } from '../theme';
-import { ArrowLeft, Clock, MapPin, CheckCircle, AlertCircle, ChevronRight, Inbox } from 'lucide-react-native';
+import { Input } from '../components/Input';
+import { Button } from '../components/Button';
+import { ArrowLeft, Clock, MapPin, CheckCircle, AlertCircle, ChevronRight, Inbox, Search } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { tramiteService } from '../services/api';
+import { TramiteSkeleton } from '../components/SkeletonCards';
+import { AppHeader } from '../components/AppHeader';
 
 export default function StatusTramiteScreen({ navigation }: any) {
     const { theme, isDarkMode } = useTheme();
-    const { token } = useAuth();
+    const { token, isGuest } = useAuth();
     const [tramites, setTramites] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(isGuest ? false : true);
     const [refreshing, setRefreshing] = useState(false);
+    const [dniSearch, setDniSearch] = useState('');
 
-    const fetchTramites = async () => {
+    const fetchTramites = async (dni?: string) => {
         if (!token) return;
+        if (isGuest && !dni) return;
+        
+        setLoading(true);
         try {
-            const data = await tramiteService.getMyTramites(token);
+            const data = await tramiteService.getMyTramites(token, dni);
             setTramites(data || []);
         } catch (error) {
             console.error('Error fetching tramites:', error);
@@ -27,12 +35,15 @@ export default function StatusTramiteScreen({ navigation }: any) {
     };
 
     useEffect(() => {
-        fetchTramites();
+        if (!isGuest) {
+            fetchTramites();
+        }
     }, []);
+
 
     const onRefresh = () => {
         setRefreshing(true);
-        fetchTramites();
+        fetchTramites(isGuest ? dniSearch : undefined);
     };
 
     const renderProgressBar = (percentage: number, days: number) => {
@@ -51,37 +62,59 @@ export default function StatusTramiteScreen({ navigation }: any) {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={lightTheme.colors.primary} />
-
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ArrowLeft color="#FFF" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Estado de Trámites</Text>
-                <View style={{ width: 40 }} />
-            </View>
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <AppHeader title="Estado de Trámites" />
 
             <View style={{ flex: 1 }}>
                 <ScrollView
-                    style={[styles.contentScroll, { backgroundColor: isDarkMode ? '#151f2d' : theme.colors.white }]}
+                    style={[styles.contentScroll, { backgroundColor: theme.colors.background }]}
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[lightTheme.colors.primary]} />
                     }
                 >
-                    <View style={[styles.formCard, { backgroundColor: theme.colors.white }]}>
+                    <View style={[
+                        styles.formCard,
+                        {
+                            backgroundColor: theme.colors.background,
+                            shadowOpacity: isDarkMode ? 0 : 0.05,
+                            elevation: isDarkMode ? 0 : 2,
+                            borderTopWidth: isDarkMode ? 0 : 1,
+                            borderColor: theme.colors.border
+                        }
+                    ]}>
                         <View style={[styles.infoSection, { backgroundColor: isDarkMode ? '#1E3A8A' : '#EBF5FF', borderColor: isDarkMode ? '#3B82F6' : '#BFDBFE' }]}>
                             <AlertCircle color={isDarkMode ? '#93C5FD' : lightTheme.colors.primary} size={20} />
                             <Text style={[styles.infoText, { color: isDarkMode ? '#BFDBFE' : lightTheme.colors.primary }]}>
-                                Los trámites tienen un plazo máximo de 45 días para ser respondidos.
+                                {isGuest ? 'Ingrese su DNI para consultar el estado de sus trámites.' : 'El plazo de respuesta varía según el tipo de trámite.'}
                             </Text>
                         </View>
 
+                        {isGuest && (
+                            <View style={styles.searchSection}>
+                                <Input
+                                    label="Consultar por DNI"
+                                    value={dniSearch}
+                                    onChangeText={setDniSearch}
+                                    placeholder="Ingrese DNI"
+                                    keyboardType="numeric"
+                                    maxLength={8}
+                                />
+                                <Button
+                                    title="Consultar"
+                                    onPress={() => fetchTramites(dniSearch)}
+                                    icon={<Search color="#FFF" size={20} />}
+                                    disabled={dniSearch.length < 8}
+                                />
+                                <View style={[styles.divider, { backgroundColor: theme.colors.border, marginVertical: 20 }]} />
+                            </View>
+                        )}
+
+
                         {loading ? (
-                            <View style={styles.centered}>
-                                <ActivityIndicator size="large" color={lightTheme.colors.primary} />
+                            <View style={{ width: '100%', paddingTop: 8 }}>
+                                {[1, 2, 3].map(i => <TramiteSkeleton key={i} />)}
                             </View>
                         ) : tramites.length === 0 ? (
                             <View style={styles.centered}>
@@ -123,7 +156,7 @@ export default function StatusTramiteScreen({ navigation }: any) {
                                         <View style={styles.progressSection}>
                                             <View style={styles.progressHeader}>
                                                 <Text style={[styles.progressLabel, { color: theme.colors.slate }]}>Progreso del trámite (días hábiles)</Text>
-                                                <Text style={[styles.progressDays, { color: theme.colors.primary }]}>{tramite.diasTranscurridos} / 45 días</Text>
+                                                <Text style={[styles.progressDays, { color: theme.colors.primary }]}>{tramite.diasTranscurridos} / {tramite.dias} días</Text>
                                             </View>
                                             {renderProgressBar(tramite.porcentajeProgreso, tramite.diasTranscurridos)}
                                         </View>
@@ -150,45 +183,18 @@ export default function StatusTramiteScreen({ navigation }: any) {
                     </View>
                 </ScrollView>
             </View>
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: lightTheme.colors.background,
-    },
-    header: {
-        backgroundColor: lightTheme.colors.primary,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 24,
-        paddingTop: Platform.OS === 'ios' ? 10 : 20,
-        paddingBottom: 50, // Extra space for overlap
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#FFF',
-    },
-    backButton: {
-        padding: 8,
-        marginLeft: -8,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        width: 40,
-        height: 40,
-        alignItems: 'center',
-        justifyContent: 'center',
     },
     contentScroll: {
         flex: 1,
         marginTop: -30,
         zIndex: 1,
-        borderTopLeftRadius: 32,
-        borderTopRightRadius: 32,
     },
     scrollContent: {
         flexGrow: 1,
@@ -199,14 +205,12 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 32,
         borderTopRightRadius: 32,
         paddingHorizontal: 24,
-        paddingTop: 40, // Increased to clearly clear the header overlap
+        paddingTop: 40,
         paddingBottom: 24,
         minHeight: 600,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
         shadowRadius: 10,
-        elevation: 8,
     },
     infoSection: {
         flexDirection: 'row',
@@ -337,5 +341,8 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '700',
         marginRight: 4,
+    },
+    searchSection: {
+        marginBottom: 20,
     },
 });

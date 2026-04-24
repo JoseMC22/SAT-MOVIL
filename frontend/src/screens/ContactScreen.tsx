@@ -7,6 +7,7 @@ import { lightTheme } from '../theme';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { ArrowLeft, Send, Camera, Image as ImageIcon, FileText, AlertCircle } from 'lucide-react-native';
+import { AppHeader } from '../components/AppHeader';
 
 export default function ContactScreen({ navigation }: any) {
     const { theme, isDarkMode } = useTheme();
@@ -102,31 +103,29 @@ export default function ContactScreen({ navigation }: any) {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={theme.colors.primary} />
-
-            <View style={[styles.header, { backgroundColor: theme.colors.primary }]}>
-                <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => navigation.goBack()}
-                >
-                    <ArrowLeft color="#FFF" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Atención al Contribuyente</Text>
-                <View style={{ width: 40 }} />
-            </View>
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <AppHeader title="Atención al Contribuyente" />
 
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
             >
-                <View style={{ flex: 1, backgroundColor: theme.colors.white }}>
+                <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
                     <ScrollView
                         style={styles.contentScroll}
                         contentContainerStyle={styles.scrollContent}
                         showsVerticalScrollIndicator={false}
                     >
-                        <View style={[styles.formCard, { backgroundColor: theme.colors.white }]}>
+                    <View style={[
+                        styles.formCard, 
+                        { 
+                            backgroundColor: theme.colors.background,
+                            shadowOpacity: isDarkMode ? 0 : 0.05,
+                            elevation: isDarkMode ? 0 : 2,
+                            borderTopWidth: isDarkMode ? 0 : 1,
+                            borderColor: theme.colors.border
+                        }
+                    ]}>
                             <View style={styles.formContent}>
                                 <View style={styles.introSection}>
                                     <AlertCircle color={theme.colors.primary} size={32} />
@@ -163,21 +162,21 @@ export default function ContactScreen({ navigation }: any) {
 
                                     <View style={styles.pickerGrid}>
                                         <TouchableOpacity
-                                            style={[styles.pickerCard, { backgroundColor: theme.colors.white, borderColor: theme.colors.border }]}
+                                            style={[styles.pickerCard, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
                                             onPress={takePhoto}
                                         >
                                             <Camera color={theme.colors.primary} size={24} />
                                             <Text style={[styles.pickerCardText, { color: theme.colors.slate }]}>CÁMARA</Text>
                                         </TouchableOpacity>
                                         <TouchableOpacity
-                                            style={[styles.pickerCard, { backgroundColor: theme.colors.white, borderColor: theme.colors.border }]}
+                                            style={[styles.pickerCard, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
                                             onPress={pickImage}
                                         >
                                             <ImageIcon color={theme.colors.primary} size={24} />
                                             <Text style={[styles.pickerCardText, { color: theme.colors.slate }]}>GALERÍA</Text>
                                         </TouchableOpacity>
                                         <TouchableOpacity
-                                            style={[styles.pickerCard, { backgroundColor: theme.colors.white, borderColor: theme.colors.border }]}
+                                            style={[styles.pickerCard, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
                                             onPress={pickDocument}
                                         >
                                             <FileText color={theme.colors.primary} size={24} />
@@ -196,7 +195,7 @@ export default function ContactScreen({ navigation }: any) {
                                             </View>
                                         ))}
                                         {documents.map((doc, index) => (
-                                            <View key={index} style={[styles.previewItemDoc, { backgroundColor: isDarkMode ? theme.colors.white : '#F1F5F9', borderColor: theme.colors.border }]}>
+                                            <View key={index} style={[styles.previewItemDoc, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}>
                                                 <FileText color={theme.colors.primary} size={32} />
                                                 <Text style={[styles.docName, { color: theme.colors.slate }]} numberOfLines={1}>{doc.name}</Text>
                                                 <TouchableOpacity style={styles.removeBadge} onPress={() => removeDocument(index)}>
@@ -221,32 +220,13 @@ export default function ContactScreen({ navigation }: any) {
                     </ScrollView>
                 </View>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 24,
-        paddingTop: Platform.OS === 'ios' ? 10 : 20,
-        paddingBottom: 60, // Extra space for overlap
-    },
-    backButton: {
-        padding: 8,
-        marginLeft: -8,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#FFF',
     },
     contentScroll: {
         flex: 1,
@@ -262,9 +242,7 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 32,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
         shadowRadius: 10,
-        elevation: 8,
     },
     formContent: {
         padding: 24,

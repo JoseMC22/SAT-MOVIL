@@ -5,17 +5,19 @@ import api from '../services/api';
 
 interface User {
     id_usuario: string;
-    codigo: string;
-    role: string;
-    correo: string;
+    codigo?: string;
+    role?: string;
+    correo?: string;
     nombre: string;
-    dni: string
-    celular: number
+    dni?: string;
+    celular?: number;
+    isGuest?: boolean;
 }
 
 interface AuthContextData {
     user: User | null;
     token: string | null;
+    isGuest: boolean;
     login: (user: User, token: string) => Promise<void>;
     logout: () => Promise<void>;
     isLoading: boolean;
@@ -93,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, token, isGuest: !!user?.isGuest, login, logout, isLoading }}>
             {children}
         </AuthContext.Provider>
     );

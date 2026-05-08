@@ -82,6 +82,8 @@ export default function LoginScreen({ navigation }: any) {
                             placeholder="Código de Contribuyente"
                             autoCapitalize="none"
                             autoCorrect={false}
+                            keyboardType="numeric"
+                            maxLength={7}
                             leftIcon={<User size={20} color={theme.colors.slate} />}
                         />
                         <View style={styles.passwordContainer}>
@@ -147,7 +149,7 @@ export default function LoginScreen({ navigation }: any) {
                     <View style={styles.footer}>
                         <Text style={[styles.footerText, { color: theme.colors.slate, fontFamily: theme.fonts.medium }]}>
                             Recaudamos para el progreso de Ica{"\n"}
-                            v 2.0.4 • SAT-ICA MOVIL
+                            v 1.1.0 • SAT-ICA MOVIL
                         </Text>
                     </View>
                 </ScrollView>

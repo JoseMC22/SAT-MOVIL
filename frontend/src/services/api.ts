@@ -165,6 +165,48 @@ export const tramiteService = {
         });
         return response.data;
     },
+    getTramitesByNum: async (token: string, numTramite: string) => {
+        const response = await api.get('/tramite', {
+            params: { numTramite },
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+    },
+};
+
+export const supportService = {
+    sendContact: async (data: { asunto: string, mensaje: string, files: any[] }, token: string) => {
+        const formData = new FormData();
+        formData.append('asunto', data.asunto);
+        formData.append('mensaje', data.mensaje);
+
+        for (const file of data.files) {
+            if (Platform.OS === 'web') {
+                const response = await fetch(file.uri);
+                const blob = await response.blob();
+                formData.append('files', blob, file.name);
+            } else {
+                // @ts-ignore
+                formData.append('files', {
+                    uri: file.uri,
+                    type: file.type || 'application/octet-stream',
+                    name: file.name || 'file',
+                });
+            }
+        }
+
+        const response = await api.post('/support/contact', formData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    },
+    verifyMail: async () => {
+        const response = await api.get('/support/verify-mail');
+        return response.data;
+    }
 };
 
 export default api;

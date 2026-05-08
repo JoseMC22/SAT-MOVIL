@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform, Alert, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform, Alert, SafeAreaView, StatusBar, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { lightTheme } from '../theme';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { ArrowLeft, Send, Camera, Image as ImageIcon, FileText, AlertCircle } from 'lucide-react-native';
 import { AppHeader } from '../components/AppHeader';
+import { supportService } from '../services/api';
 
 export default function ContactScreen({ navigation }: any) {
     const { theme, isDarkMode } = useTheme();
+    const { token } = useAuth();
     const [form, setForm] = useState({
         asunto: '',
         mensaje: ''
@@ -19,6 +22,7 @@ export default function ContactScreen({ navigation }: any) {
     const [images, setImages] = useState<string[]>([]);
     const [documents, setDocuments] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [isPickingFile, setIsPickingFile] = useState(false);
 
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -27,14 +31,21 @@ export default function ContactScreen({ navigation }: any) {
             return;
         }
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            quality: 0.7,
-        });
+        setIsPickingFile(true);
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                quality: 0.7,
+            });
 
-        if (!result.canceled) {
-            setImages([...images, result.assets[0].uri]);
+            if (!result.canceled) {
+                setImages([...images, result.assets[0].uri]);
+            }
+        } catch (error) {
+            console.error('Error picking image:', error);
+        } finally {
+            setIsPickingFile(false);
         }
     };
 
@@ -45,17 +56,25 @@ export default function ContactScreen({ navigation }: any) {
             return;
         }
 
-        const result = await ImagePicker.launchCameraAsync({
-            allowsEditing: true,
-            quality: 0.7,
-        });
+        setIsPickingFile(true);
+        try {
+            const result = await ImagePicker.launchCameraAsync({
+                allowsEditing: true,
+                quality: 0.7,
+            });
 
-        if (!result.canceled) {
-            setImages([...images, result.assets[0].uri]);
+            if (!result.canceled) {
+                setImages([...images, result.assets[0].uri]);
+            }
+        } catch (error) {
+            console.error('Error taking photo:', error);
+        } finally {
+            setIsPickingFile(false);
         }
     };
 
     const pickDocument = async () => {
+        setIsPickingFile(true);
         try {
             const result = await DocumentPicker.getDocumentAsync({
                 type: ['application/pdf'],
@@ -66,6 +85,8 @@ export default function ContactScreen({ navigation }: any) {
             }
         } catch (err) {
             console.error('Error picking document:', err);
+        } finally {
+            setIsPickingFile(false);
         }
     };
 
@@ -75,15 +96,47 @@ export default function ContactScreen({ navigation }: any) {
             return;
         }
 
+        if (!token) {
+            Alert.alert('Sesión no válida', 'Por favor inicie sesión para enviar un mensaje.');
+            return;
+        }
+
         setLoading(true);
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            Alert.alert(
-                'Mensaje Enviado',
-                'Su sugerencia o queja ha sido enviada con éxito. Le contactaremos pronto.',
-                [{ text: 'OK', onPress: () => navigation.goBack() }]
-            );
+            // Preparar archivos
+            const filesToSend: any[] = [];
+            
+            // Agregar imágenes
+            images.forEach((uri, index) => {
+                const filename = uri.split('/').pop() || `image_${index}.jpg`;
+                const match = /\.(\w+)$/.exec(filename);
+                const type = match ? `image/${match[1]}` : `image/jpeg`;
+                filesToSend.push({ uri, name: filename, type });
+            });
+
+            // Agregar documentos
+            documents.forEach((doc) => {
+                filesToSend.push({ uri: doc.uri, name: doc.name, type: 'application/pdf' });
+            });
+
+            await supportService.sendContact({
+                asunto: form.asunto,
+                mensaje: form.mensaje,
+                files: filesToSend
+            }, token);
+
+            if (Platform.OS === 'web') {
+                alert('Su sugerencia o queja ha sido enviada con éxito. Le contactaremos pronto.');
+                navigation.goBack();
+            } else {
+                Alert.alert(
+                    'Mensaje Enviado',
+                    'Su sugerencia o queja ha sido enviada con éxito. Le contactaremos pronto.',
+                    [{ text: 'OK', onPress: () => navigation.goBack() }]
+                );
+            }
         } catch (error) {
+            console.error('Error sending support message:', error);
             Alert.alert('Error', 'No se pudo enviar el mensaje. Intente nuevamente.');
         } finally {
             setLoading(false);
@@ -164,23 +217,44 @@ export default function ContactScreen({ navigation }: any) {
                                         <TouchableOpacity
                                             style={[styles.pickerCard, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
                                             onPress={takePhoto}
+                                            disabled={isPickingFile}
                                         >
-                                            <Camera color={theme.colors.primary} size={24} />
-                                            <Text style={[styles.pickerCardText, { color: theme.colors.slate }]}>CÁMARA</Text>
+                                            {isPickingFile ? (
+                                                <ActivityIndicator size="small" color={theme.colors.primary} />
+                                            ) : (
+                                                <>
+                                                    <Camera color={theme.colors.primary} size={24} />
+                                                    <Text style={[styles.pickerCardText, { color: theme.colors.slate }]}>CÁMARA</Text>
+                                                </>
+                                            )}
                                         </TouchableOpacity>
                                         <TouchableOpacity
                                             style={[styles.pickerCard, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
                                             onPress={pickImage}
+                                            disabled={isPickingFile}
                                         >
-                                            <ImageIcon color={theme.colors.primary} size={24} />
-                                            <Text style={[styles.pickerCardText, { color: theme.colors.slate }]}>GALERÍA</Text>
+                                            {isPickingFile ? (
+                                                <ActivityIndicator size="small" color={theme.colors.primary} />
+                                            ) : (
+                                                <>
+                                                    <ImageIcon color={theme.colors.primary} size={24} />
+                                                    <Text style={[styles.pickerCardText, { color: theme.colors.slate }]}>GALERÍA</Text>
+                                                </>
+                                            )}
                                         </TouchableOpacity>
                                         <TouchableOpacity
                                             style={[styles.pickerCard, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
                                             onPress={pickDocument}
+                                            disabled={isPickingFile}
                                         >
-                                            <FileText color={theme.colors.primary} size={24} />
-                                            <Text style={[styles.pickerCardText, { color: theme.colors.slate }]}>PDF</Text>
+                                            {isPickingFile ? (
+                                                <ActivityIndicator size="small" color={theme.colors.primary} />
+                                            ) : (
+                                                <>
+                                                    <FileText color={theme.colors.primary} size={24} />
+                                                    <Text style={[styles.pickerCardText, { color: theme.colors.slate }]}>PDF</Text>
+                                                </>
+                                            )}
                                         </TouchableOpacity>
                                     </View>
 

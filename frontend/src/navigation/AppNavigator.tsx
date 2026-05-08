@@ -18,11 +18,13 @@ import ProfileScreen from '../screens/ProfileScreen';
 import TermsAndConditionsScreen from '../screens/TermsAndConditionsScreen';
 import { theme } from '../theme';
 
+import { navigationRef } from './navigationRef';
+
 const Stack = createNativeStackNavigator();
 
 export function AppNavigator({ onReady }: { onReady: () => void }) {
     return (
-        <NavigationContainer onReady={onReady}>
+        <NavigationContainer onReady={onReady} ref={navigationRef}>
             <Stack.Navigator
                 initialRouteName="Login"
                 screenOptions={{

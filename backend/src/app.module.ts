@@ -8,6 +8,7 @@ import { DebtModule } from './modules/debt/debt.module.js';
 import { PapeletaModule } from './modules/papeleta/papeleta.module.js';
 import { MessageModule } from './modules/message/message.module.js';
 import { TramiteModule } from './modules/tramite/tramite.module.js';
+import { SupportModule } from './modules/support/support.module.js';
 import { JwtAuthGuard } from './modules/auth/infrastructure/jwt-auth.guard.js';
 
 @Module({
@@ -25,6 +26,7 @@ import { JwtAuthGuard } from './modules/auth/infrastructure/jwt-auth.guard.js';
     PapeletaModule,
     MessageModule,
     TramiteModule,
+    SupportModule,
   ],
   providers: [
     {

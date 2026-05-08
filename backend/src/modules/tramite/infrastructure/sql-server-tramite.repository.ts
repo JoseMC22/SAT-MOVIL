@@ -53,15 +53,20 @@ export class SqlServerTramiteRepository implements TramiteRepository {
     }
 
     async getTramitesByDni(dni: string): Promise<Tramite[]> {
+        return this.fetchTramites('LTRIM(RTRIM(r.nNumDocumento)) = @param', dni);
+    }
+
+    async getTramitesByNumTramite(numTramite: string): Promise<Tramite[]> {
+        return this.fetchTramites('LTRIM(RTRIM(t.cCodificacion)) = @param', numTramite);
+    }
+
+    private async fetchTramites(whereClause: string, paramValue: string): Promise<Tramite[]> {
         let pool;
         try {
             const config = this.config;
-            // console.log(`[STD DB] Attempting connection to ${config.server} / Database: ${config.database} as User: ${config.user}`);
-            // console.log(`[STD DB] Querying for DNI: "${dni}"`);
-
             pool = await new sql.ConnectionPool(config).connect();
             const result = await pool.request()
-                .input('dni', sql.VarChar, dni)
+                .input('param', sql.VarChar, paramValue)
                 .query(`
                     SELECT *
                     FROM (
@@ -88,19 +93,16 @@ export class SqlServerTramiteRepository implements TramiteRepository {
                             ON m.iCodOficinaDerivar = o.iCodOficina
                         INNER JOIN dbo.Tra_M_Tupa u 
                             ON t.iCodTupa = u.iCodTupa
-                        WHERE LTRIM(RTRIM(r.nNumDocumento)) = @dni
+                        WHERE ${whereClause}
                     ) AS x
                     WHERE rn = 1
                 `);
 
-            console.log(`[STD DB] Query successful. Found ${result.recordset.length} tramites.`);
             const today = new Date();
 
             return result.recordset.map(row => {
                 const fechaRegistro = new Date(row.fFecRegistro);
                 const diasTranscurridos = this.calculateBusinessDays(fechaRegistro, today);
-
-                // Logic provided by user: flagEstado 3 = finished
                 const estaFinalizado = row.nFlgEstado === 3;
 
                 return new Tramite(

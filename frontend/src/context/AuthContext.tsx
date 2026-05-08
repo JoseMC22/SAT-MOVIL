@@ -79,6 +79,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         }]
                     );
                 }
+                if (error.response?.status === 429) {
+                    const { navigate } = await import('../navigation/navigationRef');
+                    Alert.alert(
+                        'Límite de Consultas',
+                        'Ha superado el límite de consultas permitidas para el modo invitado. Por favor, regístrese o inicie sesión para continuar sin límites.',
+                        [{ 
+                            text: 'Aceptar', 
+                            onPress: async () => {
+                                await logout();
+                                navigate('Login');
+                            }
+                        }]
+                    );
+                }
                 return Promise.reject(error);
             }
         );

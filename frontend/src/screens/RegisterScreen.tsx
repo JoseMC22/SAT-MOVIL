@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform, Alert, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform, Alert, SafeAreaView, StatusBar, ActivityIndicator, Modal } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { useTheme } from '../context/ThemeContext';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { authService } from '../services/api';
-import { User, CheckCircle2, FileText, Camera, Image as ImageIcon, ArrowLeft, Send, Contact, ShieldCheck, CheckSquare, Square } from 'lucide-react-native';
+import { User, CheckCircle2, FileText, Camera, Image as ImageIcon, ArrowLeft, Send, Contact, ShieldCheck, CheckSquare, Square, HelpCircle, X } from 'lucide-react-native';
 import { AppHeader } from '../components/AppHeader';
 
 export default function RegisterScreen({ navigation }: any) {
@@ -26,6 +26,21 @@ export default function RegisterScreen({ navigation }: any) {
     const [dniCopyName, setDniCopyName] = useState<string>('');
     const [loading, setLoading] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(false);
+    const [isPicking, setIsPicking] = useState<'front' | 'back' | 'doc' | null>(null);
+    const [helpModalVisible, setHelpModalVisible] = useState(false);
+    const [helpImage, setHelpImage] = useState<any>(null);
+    const [helpTitle, setHelpTitle] = useState('');
+
+    const openHelp = (type: 'front' | 'back') => {
+        if (type === 'front') {
+            setHelpImage(require('../../assets/dni_example_front.png'));
+            setHelpTitle('Ejemplo: Cara Anterior');
+        } else {
+            setHelpImage(require('../../assets/dni_example_back.png'));
+            setHelpTitle('Ejemplo: Cara Posterior');
+        }
+        setHelpModalVisible(true);
+    };
 
     const pickImage = async (type: 'front' | 'back') => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -34,15 +49,22 @@ export default function RegisterScreen({ navigation }: any) {
             return;
         }
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            quality: 0.7,
-        });
+        setIsPicking(type);
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                quality: 0.7,
+            });
 
-        if (!result.canceled) {
-            if (type === 'front') setSelfieFrontImage(result.assets[0].uri);
-            else setSelfieBackImage(result.assets[0].uri);
+            if (!result.canceled) {
+                if (type === 'front') setSelfieFrontImage(result.assets[0].uri);
+                else setSelfieBackImage(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.error('Error picking image:', error);
+        } finally {
+            setIsPicking(null);
         }
     };
 
@@ -53,18 +75,26 @@ export default function RegisterScreen({ navigation }: any) {
             return;
         }
 
-        const result = await ImagePicker.launchCameraAsync({
-            allowsEditing: true,
-            quality: 0.7,
-        });
+        setIsPicking(type);
+        try {
+            const result = await ImagePicker.launchCameraAsync({
+                allowsEditing: true,
+                quality: 0.7,
+            });
 
-        if (!result.canceled) {
-            if (type === 'front') setSelfieFrontImage(result.assets[0].uri);
-            else setSelfieBackImage(result.assets[0].uri);
+            if (!result.canceled) {
+                if (type === 'front') setSelfieFrontImage(result.assets[0].uri);
+                else setSelfieBackImage(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.error('Error taking photo:', error);
+        } finally {
+            setIsPicking(null);
         }
     };
 
     const pickDocument = async () => {
+        setIsPicking('doc');
         try {
             const result = await DocumentPicker.getDocumentAsync({
                 type: ['image/*', 'application/pdf'],
@@ -76,6 +106,8 @@ export default function RegisterScreen({ navigation }: any) {
             }
         } catch (err) {
             console.error('Error picking document:', err);
+        } finally {
+            setIsPicking(null);
         }
     };
 
@@ -104,11 +136,17 @@ export default function RegisterScreen({ navigation }: any) {
                 dniCopyUri: dniCopyDoc.uri
             };
             await authService.register(formData as any);
-            Alert.alert(
-                'Registro Exitoso',
-                'Su solicitud ha sido enviada con éxito. Un administrador revisará su información.',
-                [{ text: 'OK', onPress: () => navigation.replace('Login') }]
-            );
+            
+            if (Platform.OS === 'web') {
+                alert('Su solicitud ha sido enviada con éxito. Un administrador revisará su información.');
+                navigation.replace('Login');
+            } else {
+                Alert.alert(
+                    'Registro Exitoso',
+                    'Su solicitud ha sido enviada con éxito. Un administrador revisará su información.',
+                    [{ text: 'OK', onPress: () => navigation.replace('Login') }]
+                );
+            }
         } catch (e: any) {
             console.error('Register error:', e.response?.data || e.message);
             Alert.alert('Error', e.response?.data?.message || 'Error al procesar el registro');
@@ -117,27 +155,47 @@ export default function RegisterScreen({ navigation }: any) {
         }
     };
 
-    const renderImagePicker = (step: string, title: string, image: string | null, onTakePhoto: () => void, onPickImage: () => void) => (
+    const renderImagePicker = (step: string, title: string, image: string | null, onTakePhoto: () => void, onPickImage: () => void, type: 'front' | 'back') => (
         <View style={styles.imageSection}>
             <View style={styles.stepTitleContainer}>
                 <Text style={[styles.stepNumber, { color: theme.colors.text }]}>{step}. </Text>
                 <Text style={[styles.stepTitle, { color: theme.colors.text }]}>{title}</Text>
+                <TouchableOpacity 
+                    onPress={() => openHelp(type)}
+                    style={styles.helpButton}
+                >
+                    <HelpCircle color={theme.colors.primary} size={20} />
+                </TouchableOpacity>
             </View>
 
             <View style={styles.pickerGrid}>
                 <TouchableOpacity
                     style={[styles.pickerCard, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
                     onPress={onTakePhoto}
+                    disabled={isPicking !== null}
                 >
-                    <Camera color={theme.colors.slate} size={28} />
-                    <Text style={[styles.pickerCardText, { color: theme.colors.slate }]}>CÁMARA</Text>
+                    {(isPicking === 'front' && step === "1") || (isPicking === 'back' && step === "2") ? (
+                        <ActivityIndicator size="small" color={theme.colors.primary} />
+                    ) : (
+                        <>
+                            <Camera color={theme.colors.slate} size={28} />
+                            <Text style={[styles.pickerCardText, { color: theme.colors.slate }]}>CÁMARA</Text>
+                        </>
+                    )}
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.pickerCard, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
                     onPress={onPickImage}
+                    disabled={isPicking !== null}
                 >
-                    <ImageIcon color={theme.colors.slate} size={28} />
-                    <Text style={[styles.pickerCardText, { color: theme.colors.slate }]}>GALERÍA</Text>
+                    {(isPicking === 'front' && step === "1") || (isPicking === 'back' && step === "2") ? (
+                        <ActivityIndicator size="small" color={theme.colors.primary} />
+                    ) : (
+                        <>
+                            <ImageIcon color={theme.colors.slate} size={28} />
+                            <Text style={[styles.pickerCardText, { color: theme.colors.slate }]}>GALERÍA</Text>
+                        </>
+                    )}
                 </TouchableOpacity>
             </View>
 
@@ -212,18 +270,20 @@ export default function RegisterScreen({ navigation }: any) {
                                             <Input
                                                 label="DNI *"
                                                 value={form.dni}
-                                                onChangeText={(text) => setForm({ ...form, dni: text })}
-                                                placeholder="8 dígitos"
+                                                onChangeText={(text) => setForm({ ...form, dni: text.replace(/[^0-9]/g, '') })}
+                                                placeholder="Máx 12 dígitos"
                                                 keyboardType="numeric"
+                                                maxLength={12}
                                             />
                                         </View>
                                         <View style={{ flex: 1 }}>
                                             <Input
                                                 label="Código Contribuyente *"
                                                 value={form.codigoContribuyente}
-                                                onChangeText={(text) => setForm({ ...form, codigoContribuyente: text })}
-                                                placeholder="Su código"
+                                                onChangeText={(text) => setForm({ ...form, codigoContribuyente: text.replace(/[^0-9]/g, '') })}
+                                                placeholder="Máx 7 dígitos"
                                                 keyboardType="numeric"
+                                                maxLength={7}
                                             />
                                         </View>
                                     </View>
@@ -264,7 +324,8 @@ export default function RegisterScreen({ navigation }: any) {
                                         "Foto sosteniendo el DNI mostrando la CARA ANTERIOR *",
                                         selfieFrontImage,
                                         () => takePhoto('front'),
-                                        () => pickImage('front')
+                                        () => pickImage('front'),
+                                        'front'
                                     )}
 
                                     {renderImagePicker(
@@ -272,7 +333,8 @@ export default function RegisterScreen({ navigation }: any) {
                                         "Foto sosteniendo el DNI mostrando la CARA POSTERIOR *",
                                         selfieBackImage,
                                         () => takePhoto('back'),
-                                        () => pickImage('back')
+                                        () => pickImage('back'),
+                                        'back'
                                     )}
 
                                     <View style={styles.imageSection}>
@@ -280,11 +342,16 @@ export default function RegisterScreen({ navigation }: any) {
                                         <TouchableOpacity
                                             style={[styles.documentButton, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
                                             onPress={pickDocument}
+                                            disabled={isPicking !== null}
                                         >
                                             <View style={styles.documentButtonContent}>
-                                                <FileText color={theme.colors.primary} size={28} />
+                                                {isPicking === 'doc' ? (
+                                                    <ActivityIndicator size="small" color={theme.colors.primary} />
+                                                ) : (
+                                                    <FileText color={theme.colors.primary} size={28} />
+                                                )}
                                                 <Text style={[styles.documentText, { color: theme.colors.slate }]} numberOfLines={1}>
-                                                    {dniCopyName ? dniCopyName : 'Seleccionar archivo'}
+                                                    {isPicking === 'doc' ? 'Procesando...' : (dniCopyName ? dniCopyName : 'Seleccionar archivo')}
                                                 </Text>
                                             </View>
                                         </TouchableOpacity>
@@ -334,6 +401,41 @@ export default function RegisterScreen({ navigation }: any) {
                     </ScrollView>
                 </View>
             </KeyboardAvoidingView>
+
+            {/* Help Modal */}
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={helpModalVisible}
+                onRequestClose={() => setHelpModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { backgroundColor: theme.colors.background }]}>
+                        <View style={styles.modalHeader}>
+                            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>{helpTitle}</Text>
+                            <TouchableOpacity onPress={() => setHelpModalVisible(false)}>
+                                <X color={theme.colors.text} size={24} />
+                            </TouchableOpacity>
+                        </View>
+                        
+                        <View style={styles.modalBody}>
+                            <Text style={[styles.modalDescription, { color: theme.colors.slate }]}>
+                                Sujete su DNI cerca de su rostro como se muestra en la imagen. Asegúrese de que tanto su cara como los datos del documento sean legibles.
+                            </Text>
+                            <Image 
+                                source={helpImage} 
+                                style={styles.helpImagePreview} 
+                                resizeMode="contain"
+                            />
+                        </View>
+
+                        <Button 
+                            title="ENTENDIDO" 
+                            onPress={() => setHelpModalVisible(false)}
+                        />
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -490,5 +592,46 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         flex: 1,
         lineHeight: 18,
+    },
+    helpButton: {
+        marginLeft: 8,
+        padding: 4,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+    },
+    modalContent: {
+        width: '100%',
+        borderRadius: 24,
+        padding: 24,
+        maxHeight: '80%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    modalBody: {
+        marginBottom: 24,
+    },
+    modalDescription: {
+        fontSize: 14,
+        lineHeight: 20,
+        marginBottom: 20,
+    },
+    helpImagePreview: {
+        width: '100%',
+        height: 300,
+        borderRadius: 16,
+        backgroundColor: '#f8fafc',
     },
 });

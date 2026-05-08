@@ -17,4 +17,5 @@ export class Tramite {
 
 export interface TramiteRepository {
     getTramitesByDni(dni: string): Promise<Tramite[]>;
+    getTramitesByNumTramite(numTramite: string): Promise<Tramite[]>;
 }

@@ -16,15 +16,17 @@ export default function StatusTramiteScreen({ navigation }: any) {
     const [tramites, setTramites] = useState<any[]>([]);
     const [loading, setLoading] = useState(isGuest ? false : true);
     const [refreshing, setRefreshing] = useState(false);
-    const [dniSearch, setDniSearch] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
 
-    const fetchTramites = async (dni?: string) => {
+    const fetchTramites = async (query?: string) => {
         if (!token) return;
-        if (isGuest && !dni) return;
-        
+        if (isGuest && !query) return;
+
         setLoading(true);
         try {
-            const data = await tramiteService.getMyTramites(token, dni);
+            const data = isGuest
+                ? await tramiteService.getTramitesByNum(token, query!)
+                : await tramiteService.getMyTramites(token);
             setTramites(data || []);
         } catch (error) {
             console.error('Error fetching tramites:', error);
@@ -43,12 +45,12 @@ export default function StatusTramiteScreen({ navigation }: any) {
 
     const onRefresh = () => {
         setRefreshing(true);
-        fetchTramites(isGuest ? dniSearch : undefined);
+        fetchTramites(isGuest ? searchQuery : undefined);
     };
 
     const renderProgressBar = (percentage: number, elapsedDays: number, limitDays: number) => {
         let barColor = lightTheme.colors.primary;
-        
+
         if (elapsedDays > limitDays) {
             barColor = lightTheme.colors.error; // Delayed
         } else if (elapsedDays === limitDays) {
@@ -87,25 +89,24 @@ export default function StatusTramiteScreen({ navigation }: any) {
                         <View style={[styles.infoSection, { backgroundColor: isDarkMode ? '#1E3A8A' : '#EBF5FF', borderColor: isDarkMode ? '#3B82F6' : '#BFDBFE' }]}>
                             <AlertCircle color={isDarkMode ? '#93C5FD' : lightTheme.colors.primary} size={20} />
                             <Text style={[styles.infoText, { color: isDarkMode ? '#BFDBFE' : lightTheme.colors.primary }]}>
-                                {isGuest ? 'Ingrese su DNI para consultar el estado de sus trámites.' : 'El plazo de respuesta varía según el tipo de trámite.'}
+                                {isGuest ? 'Ingrese su número de trámite para consultar su estado.' : 'El plazo de respuesta varía según el tipo de trámite.'}
                             </Text>
                         </View>
 
                         {isGuest && (
                             <View style={styles.searchSection}>
                                 <Input
-                                    label="Consultar por DNI"
-                                    value={dniSearch}
-                                    onChangeText={setDniSearch}
-                                    placeholder="Ingrese DNI"
-                                    keyboardType="numeric"
-                                    maxLength={8}
+                                    label="Consultar por N° de Trámite"
+                                    value={searchQuery}
+                                    onChangeText={setSearchQuery}
+                                    placeholder="Ej: 202400123"
+                                    autoCapitalize="characters"
                                 />
                                 <Button
                                     title="Consultar"
-                                    onPress={() => fetchTramites(dniSearch)}
+                                    onPress={() => fetchTramites(searchQuery)}
                                     icon={<Search color="#FFF" size={20} />}
-                                    disabled={dniSearch.length < 8}
+                                    disabled={searchQuery.length < 5}
                                 />
                                 <View style={[styles.divider, { backgroundColor: theme.colors.border, marginVertical: 20 }]} />
                             </View>

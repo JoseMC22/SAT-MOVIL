@@ -21,7 +21,7 @@ export default function DebtResultsScreen({ route, navigation }: any) {
 
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [expandedIds, setExpandedIds] = useState<number[]>([]);
+    const [expandedIds, setExpandedIds] = useState<string[]>([]);
 
     const consolidatedData = React.useMemo(() => {
         if (searchCriteria.predio !== '' || results.length === 0) return [];
@@ -62,6 +62,40 @@ export default function DebtResultsScreen({ route, navigation }: any) {
         return finalData;
     }, [results, searchCriteria.predio]);
 
+    const periodConsolidatedData = React.useMemo(() => {
+        if (searchCriteria.tributo !== '11.00' || searchCriteria.predio === '' || results.length === 0) return [];
+
+        const groups: any = {};
+        results.forEach((item: any) => {
+            const key = item.periodo || 'N/A';
+            if (!groups[key]) {
+                groups[key] = {
+                    periodo: key,
+                    fec_venc: item.fec_venc,
+                    concepts: []
+                };
+            }
+
+            groups[key].concepts.push({
+                des_tipo: item.des_tipo,
+                imp_reaj: item.imp_reaj,
+                mora: item.mora,
+                total: (item.imp_reaj || 0) + (item.mora || 0)
+            });
+
+            if (item.costo_emis > 0) {
+                groups[key].concepts.push({
+                    des_tipo: 'DERECHO EMISIÓN',
+                    imp_reaj: item.costo_emis,
+                    mora: 0,
+                    total: item.costo_emis
+                });
+            }
+        });
+
+        return Object.values(groups).sort((a: any, b: any) => a.periodo.localeCompare(b.periodo));
+    }, [results, searchCriteria.tributo, searchCriteria.predio]);
+
     useEffect(() => {
         const fetchResults = async () => {
             if (!token) return;
@@ -85,7 +119,7 @@ export default function DebtResultsScreen({ route, navigation }: any) {
 
     const totalAmount = results.reduce((sum: number, item: any) => sum + (item.imp_reaj + item.mora + item.costo_emis || 0), 0);
 
-    const toggleExpand = useCallback((id: number) => {
+    const toggleExpand = useCallback((id: string) => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         setExpandedIds((prev) =>
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
@@ -105,13 +139,14 @@ export default function DebtResultsScreen({ route, navigation }: any) {
     };
 
     const DebtCard = ({ item, index }: { item: any; index: number }) => {
-        const isExpanded = expandedIds.includes(index);
+        const id = `debt-${index}`;
+        const isExpanded = expandedIds.includes(id);
         let totalitem = item.imp_reaj + item.mora + item.costo_emis - item.descuento;
         return (
             <>
                 <View style={[styles.debtCard, { backgroundColor: theme.colors.white, borderColor: isExpanded ? theme.colors.primary : theme.colors.border, borderWidth: isExpanded ? 2 : 1 }]}>
                     <TouchableOpacity
-                        onPress={() => toggleExpand(index)}
+                        onPress={() => toggleExpand(id)}
                         activeOpacity={0.7}
                     >
                         <View style={styles.cardHeader}>
@@ -152,7 +187,7 @@ export default function DebtResultsScreen({ route, navigation }: any) {
 
                     <TouchableOpacity
                         style={[styles.cardFooter, { borderTopColor: theme.colors.border }]}
-                        onPress={() => toggleExpand(index)}
+                        onPress={() => toggleExpand(id)}
                     >
                         <View style={[styles.tag, { backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9' }]}>
                             <Calendar size={12} color={theme.colors.slate} />
@@ -173,7 +208,8 @@ export default function DebtResultsScreen({ route, navigation }: any) {
     };
 
     const ConsolidatedDebtCard = ({ item, index }: { item: any; index: number }) => {
-        const isExpanded = expandedIds.includes(index);
+        const id = `cons-${index}`;
+        const isExpanded = expandedIds.includes(id);
         const totalPredio = item.concepts.reduce((sum: number, c: any) => sum + c.imp_reaj + c.mora, 0);
 
         return (
@@ -185,7 +221,7 @@ export default function DebtResultsScreen({ route, navigation }: any) {
 
                 <View style={[styles.debtCard, { backgroundColor: theme.colors.white, borderColor: isExpanded ? theme.colors.primary : theme.colors.border, borderWidth: isExpanded ? 2 : 1 }]}>
                     <TouchableOpacity
-                        onPress={() => toggleExpand(index)}
+                        onPress={() => toggleExpand(id)}
                         activeOpacity={0.7}
                     >
                         <View style={styles.cardHeader}>
@@ -225,7 +261,7 @@ export default function DebtResultsScreen({ route, navigation }: any) {
 
                     <TouchableOpacity
                         style={[styles.cardFooter, { borderTopColor: theme.colors.border }]}
-                        onPress={() => toggleExpand(index)}
+                        onPress={() => toggleExpand(id)}
                     >
                         <View style={[styles.tag, { backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9' }]}>
                             <Info size={12} color={theme.colors.slate} />
@@ -242,6 +278,72 @@ export default function DebtResultsScreen({ route, navigation }: any) {
                     </TouchableOpacity>
                 </View>
             </>
+        );
+    };
+
+    const PeriodConsolidatedDebtCard = ({ item, index }: { item: any; index: number }) => {
+        const id = `period-${index}`;
+        const isExpanded = expandedIds.includes(id);
+        const totalPeriodo = item.concepts.reduce((sum: number, c: any) => sum + c.total, 0);
+
+        return (
+            <View style={[styles.debtCard, { backgroundColor: theme.colors.white, borderColor: isExpanded ? theme.colors.primary : theme.colors.border, borderWidth: isExpanded ? 2 : 1 }]}>
+                <TouchableOpacity
+                    onPress={() => toggleExpand(id)}
+                    activeOpacity={0.7}
+                >
+                    <View style={styles.cardHeader}>
+                        <View style={[styles.iconBox, { backgroundColor: isDarkMode ? '#1E293B' : '#F0F7FF' }]}>
+                            <Calendar color={theme.colors.primary} size={24} />
+                        </View>
+                        <View style={styles.cardHeaderInfo}>
+                            <Text style={[styles.debtName, { color: theme.colors.text }]}>Periodo: {item.periodo}</Text>
+                        </View>
+                        <Text style={[styles.debtAmount, { color: theme.colors.text }]}>S/ {totalPeriodo.toFixed(2)}</Text>
+                    </View>
+                </TouchableOpacity>
+
+                {isExpanded && (
+                    <View style={styles.cardExpandedArea}>
+                        <View style={[styles.consolidatedTable, { backgroundColor: isDarkMode ? '#1E293B' : '#F8FAFC' }]}>
+                            {/* Table Header */}
+                            <View style={[styles.tableRow, styles.tableHeader, { borderBottomColor: theme.colors.border }]}>
+                                <Text style={[styles.tableHeaderCell, { color: theme.colors.slate, flex: 2.5 }]}>Concepto</Text>
+                                <Text style={[styles.tableHeaderCell, { color: theme.colors.slate, textAlign: 'right' }]}>Ins.</Text>
+                                <Text style={[styles.tableHeaderCell, { color: theme.colors.slate, textAlign: 'right' }]}>Mora</Text>
+                                <Text style={[styles.tableHeaderCell, { color: theme.colors.slate, textAlign: 'right' }]}>Total</Text>
+                            </View>
+                            {/* Table Body */}
+                            {item.concepts.map((concept: any, cIndex: number) => (
+                                <View key={cIndex} style={[styles.tableRow, { borderBottomColor: theme.colors.border, borderBottomWidth: cIndex === item.concepts.length - 1 ? 0 : 0.5 }]}>
+                                    <Text style={[styles.tableCell, { color: theme.colors.text, flex: 2.5 }]} numberOfLines={1}>{concept.des_tipo}</Text>
+                                    <Text style={[styles.tableCell, { color: theme.colors.text, textAlign: 'right' }]}>{concept.imp_reaj.toFixed(2)}</Text>
+                                    <Text style={[styles.tableCell, { color: theme.colors.text, textAlign: 'right' }]}>{concept.mora.toFixed(2)}</Text>
+                                    <Text style={[styles.tableCell, { color: theme.colors.text, textAlign: 'right', fontWeight: 'bold' }]}>{concept.total.toFixed(2)}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                )}
+
+                <TouchableOpacity
+                    style={[styles.cardFooter, { borderTopColor: theme.colors.border }]}
+                    onPress={() => toggleExpand(id)}
+                >
+                    <View style={[styles.tag, { backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9' }]}>
+                        <Calendar size={12} color={theme.colors.slate} />
+                        <Text style={[styles.tagText, { color: theme.colors.slate }]}>Vence: {formatDate(item.fec_venc)}</Text>
+                    </View>
+                    <View style={styles.detailLink}>
+                        <Text style={[styles.detailLinkText, { color: theme.colors.primary }]}>{isExpanded ? 'Ocultar Detalle' : 'Ver Detalle'}</Text>
+                        {isExpanded ? (
+                            <ChevronUp size={16} color={theme.colors.primary} />
+                        ) : (
+                            <ChevronDown size={16} color={theme.colors.primary} />
+                        )}
+                    </View>
+                </TouchableOpacity>
+            </View>
         );
     };
 
@@ -321,7 +423,11 @@ export default function DebtResultsScreen({ route, navigation }: any) {
                                     )}
 
                                     {results.length > 0 ? (
-                                        (searchCriteria.predio === '' && searchCriteria.tributo !== '02.01') ? (
+                                        (searchCriteria.tributo === '11.00' && searchCriteria.predio !== '') ? (
+                                            periodConsolidatedData.map((item: any, index: number) => (
+                                                <PeriodConsolidatedDebtCard key={index} item={item} index={index} />
+                                            ))
+                                        ) : (searchCriteria.predio === '' && searchCriteria.tributo !== '02.01') ? (
                                             consolidatedData.map((item: any, index: number) => (
                                                 <ConsolidatedDebtCard key={index} item={item} index={index} />
                                             ))

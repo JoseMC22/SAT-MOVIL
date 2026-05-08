@@ -80,4 +80,37 @@ export class MailerService {
 
         return await this.transporter.sendMail(mailOptions);
     }
+
+    async verifyConnection() {
+        try {
+            await this.transporter.verify();
+            return { success: true, message: 'SMTP connection verified successfully' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    }
+
+    async sendSupportEmail(data: any, files: Express.Multer.File[], user: any) {
+        const mailOptions = {
+            from: `"SAT-MOVIL Soporte" <${this.configService.get<string>('MAIL_USER')}>`,
+            to: 'saticamovil@satica.gob.pe',
+            subject: `Soporte: ${data.asunto} - ${user.username}`,
+            text: `
+                Nuevo mensaje de soporte recibido de la App:
+
+                Usuario: ${user.username}
+                DNI: ${user.dni}
+                Asunto: ${data.asunto}
+
+                Mensaje:
+                ${data.mensaje}
+            `,
+            attachments: files.map(file => ({
+                filename: file.originalname,
+                content: file.buffer,
+            })),
+        };
+
+        return await this.transporter.sendMail(mailOptions);
+    }
 }
